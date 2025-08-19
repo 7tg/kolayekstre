@@ -28,6 +28,7 @@ import TransactionTable from './components/TransactionTable';
 import TransactionChart from './components/TransactionChart';
 import StatsPanel from './components/StatsPanel';
 import LanguageSelector from './components/LanguageSelector';
+import ThemeToggle from './components/ThemeToggle';
 import IndexedDBManager from './utils/indexedDB';
 import { Transaction, ParseResult } from './types';
 
@@ -128,7 +129,8 @@ function App() {
               {t('appTitle')}
             </Typography>
           </Box>
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <ThemeToggle />
             <LanguageSelector />
           </Box>
         </Box>

@@ -47,5 +47,11 @@
   "filter": "Filter",
   "allTransactions": "All Transactions",
   "transactionsCount": "{{count}} transactions",
-  "bank": "Bank"
+  "bank": "Bank",
+  "theme": {
+    "toggle": "Toggle Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
 }

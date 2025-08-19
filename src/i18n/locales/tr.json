@@ -47,5 +47,11 @@
   "filter": "Filtre",
   "allTransactions": "Tüm İşlemler",
   "transactionsCount": "{{count}} işlem",
-  "bank": "Banka"
+  "bank": "Banka",
+  "theme": {
+    "toggle": "Tema Değiştir",
+    "light": "Açık",
+    "dark": "Koyu",
+    "system": "Sistem"
+  }
 }
