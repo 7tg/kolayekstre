@@ -53,5 +53,10 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "navigation": {
+    "menu": "Menu",
+    "overview": "Overview",
+    "dashboard": "Dashboard"
   }
 }

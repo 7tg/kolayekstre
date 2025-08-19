@@ -53,5 +53,10 @@
     "light": "Açık",
     "dark": "Koyu",
     "system": "Sistem"
+  },
+  "navigation": {
+    "menu": "Menü",
+    "overview": "Genel Bakış",
+    "dashboard": "Kontrol Paneli"
   }
 }

@@ -4,31 +4,21 @@ import {
   Container, 
   Paper, 
   Typography, 
-  Tabs, 
-  Tab, 
-  Box, 
-  Button,
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
   Snackbar,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
-import { 
-  Analytics as AnalyticsIcon,
-  ShowChart as ChartIcon,
-  TableView as TableIcon,
-  Delete as DeleteIcon,
-  AccountBalance as BankIcon
-} from '@mui/icons-material';
 import FileUpload from './components/FileUpload';
 import TransactionTable from './components/TransactionTable';
 import TransactionChart from './components/TransactionChart';
 import StatsPanel from './components/StatsPanel';
-import LanguageSelector from './components/LanguageSelector';
-import ThemeToggle from './components/ThemeToggle';
+import MainLayout from './components/Layout/MainLayout';
 import IndexedDBManager from './utils/indexedDB';
 import { Transaction, ParseResult } from './types';
 
@@ -119,86 +109,41 @@ function App() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper elevation={0} sx={{ p: 3, mb: 3, textAlign: 'center', bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ flex: 1 }} />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <BankIcon sx={{ fontSize: 40 }} />
-            <Typography variant="h3" component="h1" fontWeight="bold">
-              {t('appTitle')}
-            </Typography>
-          </Box>
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-            <ThemeToggle />
-            <LanguageSelector />
-          </Box>
-        </Box>
-        <Typography variant="h6" sx={{ opacity: 0.9 }}>
-          {t('appTitle')}
-        </Typography>
-      </Paper>
+    <MainLayout
+      activeTab={activeTab}
+      onTabChange={(tab) => setActiveTab(tab as TabType)}
+      onClearData={() => setClearDialogOpen(true)}
+      hasTransactions={transactions.length > 0}
+    >
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <FileUpload 
+          onTransactionsLoaded={handleTransactionsLoaded}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+        />
 
-      <FileUpload 
-        onTransactionsLoaded={handleTransactionsLoaded}
-        isLoading={isLoading}
-        setIsLoading={setIsLoading}
-      />
-
-      {transactions.length > 0 && (
-        <Paper elevation={2} sx={{ mt: 3 }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-              <Tab 
-                value="stats" 
-                icon={<AnalyticsIcon />} 
-                label={t('stats')} 
-                iconPosition="start"
-              />
-              <Tab 
-                value="chart" 
-                icon={<ChartIcon />} 
-                label={t('chart')} 
-                iconPosition="start"
-              />
-              <Tab 
-                value="table" 
-                icon={<TableIcon />} 
-                label={t('transactions')} 
-                iconPosition="start"
-              />
-            </Tabs>
-            <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', textAlign: 'right' }}>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => setClearDialogOpen(true)}
-              >
-                {t('clearData')}
-              </Button>
+        {transactions.length > 0 && (
+          <Paper elevation={2} sx={{ mt: 3 }}>
+            <Box sx={{ p: 3 }}>
+              {activeTab === 'stats' && <StatsPanel transactions={transactions} />}
+              {activeTab === 'chart' && <TransactionChart transactions={transactions} />}
+              {activeTab === 'table' && <TransactionTable transactions={transactions} />}
             </Box>
-          </Box>
+          </Paper>
+        )}
 
-          <Box sx={{ p: 3 }}>
-            {activeTab === 'stats' && <StatsPanel transactions={transactions} />}
-            {activeTab === 'chart' && <TransactionChart transactions={transactions} />}
-            {activeTab === 'table' && <TransactionTable transactions={transactions} />}
-          </Box>
-        </Paper>
-      )}
-
-      {transactions.length === 0 && !isLoading && (
-        <Paper elevation={2} sx={{ p: 6, textAlign: 'center', mt: 3 }}>
-          <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>📄</Typography>
-          <Typography variant="h5" component="h3" gutterBottom>
-            {t('noTransactions')}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {t('uploadArea')}
-          </Typography>
-        </Paper>
-      )}
+        {transactions.length === 0 && !isLoading && (
+          <Paper elevation={2} sx={{ p: 6, textAlign: 'center', mt: 3 }}>
+            <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>📄</Typography>
+            <Typography variant="h5" component="h3" gutterBottom>
+              {t('noTransactions')}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {t('uploadArea')}
+            </Typography>
+          </Paper>
+        )}
+      </Container>
 
       <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
         <DialogTitle>{t('clearData')}</DialogTitle>
@@ -227,7 +172,7 @@ function App() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </MainLayout>
   );
 }
 
