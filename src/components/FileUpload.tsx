@@ -87,17 +87,17 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
     <Paper elevation={2} sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
         <FormControl fullWidth size="small">
-          <InputLabel id="bank-select-label">Bank Selection</InputLabel>
+          <InputLabel id="bank-select-label">{t('bankSelection')}</InputLabel>
           <Select 
             labelId="bank-select-label"
             value={selectedBank} 
-            label="Bank Selection"
+            label={t('bankSelection')}
             onChange={(e) => setSelectedBank(e.target.value)}
             disabled={isLoading}
             startAdornment={<BankIcon sx={{ mr: 1, color: 'text.secondary' }} />}
           >
-            <MenuItem value="auto">Auto Detect</MenuItem>
-            <MenuItem value="ziraat">Ziraat Bank</MenuItem>
+            <MenuItem value="auto">{t('autoDetect')}</MenuItem>
+            <MenuItem value="ziraat">{t('ziraatBank')}</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -141,7 +141,7 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
           <Box>
             <FileIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
             <Typography variant="h5" component="h3" gutterBottom>
-              Upload Bank Statement
+              {t('uploadBankStatement')}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               {t('uploadArea')}
@@ -155,7 +155,7 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
               {t('selectFiles')}
             </Button>
             <Typography variant="caption" display="block" color="text.secondary">
-              Supported formats: .xlsx, .xls
+              {t('supportedFormats')}
             </Typography>
           </Box>
         )}
@@ -163,7 +163,7 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
       
       <Alert severity="info" sx={{ mt: 2 }}>
         <Typography variant="body2">
-          <strong>Note:</strong> Duplicate transactions are not uploaded, only new data is added.
+          <strong>{t('note')}</strong> {t('duplicateNote')}
         </Typography>
       </Alert>
     </Paper>

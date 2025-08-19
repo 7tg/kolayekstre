@@ -41,10 +41,9 @@ export default function TransactionTable({ transactions }: TransactionTableProps
 
   const formatCurrency = (amount: number): string => {
     const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
-    const currency = i18n.language === 'tr' ? 'TRY' : 'USD';
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: currency
+      currency: 'TRY'
     }).format(amount);
   };
 
@@ -111,7 +110,7 @@ export default function TransactionTable({ transactions }: TransactionTableProps
     },
     {
       field: 'bankType',
-      headerName: 'Bank',
+      headerName: t('bank'),
       width: 120,
       sortable: true,
       renderCell: (params: GridRenderCellParams) => {
@@ -132,19 +131,19 @@ export default function TransactionTable({ transactions }: TransactionTableProps
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Filter</InputLabel>
+          <InputLabel>{t('filter')}</InputLabel>
           <Select
             value={filterType}
-            label="Filter"
+            label={t('filter')}
             onChange={(e) => setFilterType(e.target.value as FilterType)}
           >
-            <MenuItem value="all">All Transactions</MenuItem>
+            <MenuItem value="all">{t('allTransactions')}</MenuItem>
             <MenuItem value="income">{t('income')}</MenuItem>
             <MenuItem value="expense">{t('expense')}</MenuItem>
           </Select>
         </FormControl>
         <Typography variant="body2" color="text.secondary">
-          {filteredTransactions.length} transactions
+          {t('transactionsCount', { count: filteredTransactions.length })}
         </Typography>
       </Box>
 

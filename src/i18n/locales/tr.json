@@ -32,5 +32,20 @@
   "totalIncome": "Toplam Gelir",
   "totalExpense": "Toplam Gider",
   "netBalance": "Net Bakiye",
-  "averageTransaction": "Ortalama İşlem"
+  "averageTransaction": "Ortalama İşlem",
+  "bankSelection": "Banka Seçimi",
+  "autoDetect": "Otomatik Algıla",
+  "ziraatBank": "Ziraat Bankası",
+  "uploadBankStatement": "Banka Ekstresi Yükle",
+  "supportedFormats": "Desteklenen formatlar: .xlsx, .xls",
+  "note": "Not:",
+  "duplicateNote": "Tekrarlayan işlemler yüklenmez, sadece yeni veriler eklenir.",
+  "summaryStats": "Özet İstatistikler",
+  "dateRange": "Tarih Aralığı",
+  "banks": "Bankalar",
+  "noChartData": "Grafik için yeterli veri yok.",
+  "filter": "Filtre",
+  "allTransactions": "Tüm İşlemler",
+  "transactionsCount": "{{count}} işlem",
+  "bank": "Banka"
 }

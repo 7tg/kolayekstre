@@ -59,10 +59,9 @@ export default function TransactionChart({ transactions }: TransactionChartProps
 
   const formatCurrency = (amount: number): string => {
     const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
-    const currency = i18n.language === 'tr' ? 'TRY' : 'USD';
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: currency,
+      currency: 'TRY',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
@@ -77,7 +76,7 @@ export default function TransactionChart({ transactions }: TransactionChartProps
       {chartData.months.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="body1" color="text.secondary">
-            Not enough data for chart.
+            {t('noChartData')}
           </Typography>
         </Box>
       ) : (

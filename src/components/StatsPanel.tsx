@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Card, 
   CardContent, 
@@ -32,6 +33,7 @@ interface StatsData {
 }
 
 export default function StatsPanel({ transactions }: StatsPanelProps) {
+  const { t, i18n } = useTranslation();
   const stats = useMemo((): StatsData => {
     if (!transactions || transactions.length === 0) {
       return {
@@ -86,14 +88,16 @@ export default function StatsPanel({ transactions }: StatsPanelProps) {
   }, [transactions]);
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('tr-TR', {
+    const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: 'TRY'
     }).format(amount);
   };
 
   const formatDate = (date: Date): string => {
-    return new Date(date).toLocaleDateString('tr-TR');
+    const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
+    return new Date(date).toLocaleDateString(locale);
   };
 
   const StatCard = ({ icon, label, value, color = 'primary' }: {
@@ -130,7 +134,7 @@ export default function StatsPanel({ transactions }: StatsPanelProps) {
   return (
     <Box>
       <Typography variant="h4" component="h3" gutterBottom sx={{ mb: 3 }}>
-        Özet İstatistikler
+        {t('summaryStats')}
       </Typography>
       
       <Box sx={{ 
@@ -141,41 +145,41 @@ export default function StatsPanel({ transactions }: StatsPanelProps) {
       }}>
         <StatCard
           icon={<AnalyticsIcon />}
-          label="Toplam İşlem"
-          value={stats.totalTransactions.toLocaleString('tr-TR')}
+          label={t('totalTransactions')}
+          value={stats.totalTransactions.toLocaleString(i18n.language === 'tr' ? 'tr-TR' : 'en-US')}
         />
 
         <StatCard
           icon={<IncomeIcon />}
-          label="Toplam Gelir"
+          label={t('totalIncome')}
           value={formatCurrency(stats.totalIncome)}
           color="success"
         />
 
         <StatCard
           icon={<ExpenseIcon />}
-          label="Toplam Gider"
+          label={t('totalExpense')}
           value={formatCurrency(stats.totalExpenses)}
           color="error"
         />
 
         <StatCard
           icon={<BalanceIcon />}
-          label="Net Tutar"
+          label={t('netBalance')}
           value={formatCurrency(stats.netAmount)}
           color={stats.netAmount >= 0 ? 'success' : 'error'}
         />
 
         <StatCard
           icon={<AverageIcon />}
-          label="Ortalama İşlem"
+          label={t('averageTransaction')}
           value={formatCurrency(stats.averageTransaction)}
         />
 
         {stats.dateRange && (
           <StatCard
             icon={<DateIcon />}
-            label="Tarih Aralığı"
+            label={t('dateRange')}
             value={`${formatDate(stats.dateRange.earliest)} - ${formatDate(stats.dateRange.latest)}`}
           />
         )}
@@ -197,7 +201,7 @@ export default function StatsPanel({ transactions }: StatsPanelProps) {
                 <BankIcon />
               </Box>
               <Typography variant="h6" component="div" color="text.secondary">
-                Bankalar
+                {t('banks')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
