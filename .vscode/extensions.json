@@ -1,0 +1,40 @@
+{
+  "recommendations": [
+    // Essential
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "dsznajder.es7-react-js-snippets",
+    
+    // React & TypeScript
+    "burkeholland.simple-react-snippets",
+    "pmneo.tsimporter",
+    "ms-vscode.vscode-typescript-next",
+    
+    // Development Tools
+    "antfu.vite",
+    "vitest.explorer",
+    "PKief.material-icon-theme",
+    
+    // Productivity
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "eamodio.gitlens",
+    
+    // i18n Support
+    "lokalise.i18n-ally",
+    
+    // Optional but Useful
+    "rangav.vscode-thunder-client",
+    "usernamehw.errorlens",
+    "Gruntfuggly.todo-tree",
+    
+    // Additional Useful Extensions
+    "bradlc.vscode-tailwindcss",
+    "styled-components.vscode-styled-components",
+    "mikestead.dotenv",
+    "streetsidesoftware.code-spell-checker",
+    "wix.vscode-import-cost",
+    "VisualStudioExptTeam.vscodeintellicode",
+    "VisualStudioExptTeam.intellicode-api-usage-examples"
+  ]
+}
