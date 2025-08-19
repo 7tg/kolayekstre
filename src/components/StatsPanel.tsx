@@ -1,4 +1,20 @@
 import { useMemo } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Box, 
+  Chip 
+} from '@mui/material';
+import { 
+  Analytics as AnalyticsIcon,
+  TrendingUp as IncomeIcon,
+  TrendingDown as ExpenseIcon,
+  AccountBalance as BalanceIcon,
+  Calculate as AverageIcon,
+  CalendarMonth as DateIcon,
+  AccountBalance as BankIcon
+} from '@mui/icons-material';
 import { Transaction } from '../types';
 
 interface StatsPanelProps {
@@ -80,75 +96,123 @@ export default function StatsPanel({ transactions }: StatsPanelProps) {
     return new Date(date).toLocaleDateString('tr-TR');
   };
 
+  const StatCard = ({ icon, label, value, color = 'primary' }: {
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    color?: 'primary' | 'success' | 'error' | 'warning';
+  }) => (
+    <Card elevation={2} sx={{ height: '100%' }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ 
+            p: 1, 
+            borderRadius: 1, 
+            bgcolor: `${color}.light`, 
+            color: `${color}.contrastText`,
+            mr: 2,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            {icon}
+          </Box>
+          <Typography variant="h6" component="div" color="text.secondary">
+            {label}
+          </Typography>
+        </Box>
+        <Typography variant="h4" component="div" fontWeight="bold">
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="stats-panel">
-      <h3>Özet İstatistikler</h3>
+    <Box>
+      <Typography variant="h4" component="h3" gutterBottom sx={{ mb: 3 }}>
+        Özet İstatistikler
+      </Typography>
       
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">📊</div>
-          <div className="stat-content">
-            <div className="stat-label">Toplam İşlem</div>
-            <div className="stat-value">{stats.totalTransactions.toLocaleString('tr-TR')}</div>
-          </div>
-        </div>
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
+        gap: 3,
+        mb: 3
+      }}>
+        <StatCard
+          icon={<AnalyticsIcon />}
+          label="Toplam İşlem"
+          value={stats.totalTransactions.toLocaleString('tr-TR')}
+        />
 
-        <div className="stat-card income">
-          <div className="stat-icon">💰</div>
-          <div className="stat-content">
-            <div className="stat-label">Toplam Gelir</div>
-            <div className="stat-value">{formatCurrency(stats.totalIncome)}</div>
-          </div>
-        </div>
+        <StatCard
+          icon={<IncomeIcon />}
+          label="Toplam Gelir"
+          value={formatCurrency(stats.totalIncome)}
+          color="success"
+        />
 
-        <div className="stat-card expense">
-          <div className="stat-icon">💸</div>
-          <div className="stat-content">
-            <div className="stat-label">Toplam Gider</div>
-            <div className="stat-value">{formatCurrency(stats.totalExpenses)}</div>
-          </div>
-        </div>
+        <StatCard
+          icon={<ExpenseIcon />}
+          label="Toplam Gider"
+          value={formatCurrency(stats.totalExpenses)}
+          color="error"
+        />
 
-        <div className={`stat-card ${stats.netAmount >= 0 ? 'positive' : 'negative'}`}>
-          <div className="stat-icon">{stats.netAmount >= 0 ? '📈' : '📉'}</div>
-          <div className="stat-content">
-            <div className="stat-label">Net Tutar</div>
-            <div className="stat-value">{formatCurrency(stats.netAmount)}</div>
-          </div>
-        </div>
+        <StatCard
+          icon={<BalanceIcon />}
+          label="Net Tutar"
+          value={formatCurrency(stats.netAmount)}
+          color={stats.netAmount >= 0 ? 'success' : 'error'}
+        />
 
-        <div className="stat-card">
-          <div className="stat-icon">📊</div>
-          <div className="stat-content">
-            <div className="stat-label">Ortalama İşlem</div>
-            <div className="stat-value">{formatCurrency(stats.averageTransaction)}</div>
-          </div>
-        </div>
+        <StatCard
+          icon={<AverageIcon />}
+          label="Ortalama İşlem"
+          value={formatCurrency(stats.averageTransaction)}
+        />
 
         {stats.dateRange && (
-          <div className="stat-card wide">
-            <div className="stat-icon">📅</div>
-            <div className="stat-content">
-              <div className="stat-label">Tarih Aralığı</div>
-              <div className="stat-value">
-                {formatDate(stats.dateRange.earliest)} - {formatDate(stats.dateRange.latest)}
-              </div>
-            </div>
-          </div>
+          <StatCard
+            icon={<DateIcon />}
+            label="Tarih Aralığı"
+            value={`${formatDate(stats.dateRange.earliest)} - ${formatDate(stats.dateRange.latest)}`}
+          />
         )}
+      </Box>
 
-        {stats.bankTypes.length > 0 && (
-          <div className="stat-card wide">
-            <div className="stat-icon">🏦</div>
-            <div className="stat-content">
-              <div className="stat-label">Bankalar</div>
-              <div className="stat-value">
-                {stats.bankTypes.join(', ')}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      {stats.bankTypes.length > 0 && (
+        <Card elevation={2} sx={{ height: '100%' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ 
+                p: 1, 
+                borderRadius: 1, 
+                bgcolor: 'primary.light', 
+                color: 'primary.contrastText',
+                mr: 2,
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <BankIcon />
+              </Box>
+              <Typography variant="h6" component="div" color="text.secondary">
+                Bankalar
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {stats.bankTypes.map((bank, index) => (
+                <Chip 
+                  key={index} 
+                  label={bank} 
+                  variant="outlined" 
+                  color="primary" 
+                />
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+    </Box>
   );
 }

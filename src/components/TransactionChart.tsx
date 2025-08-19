@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { Box, Typography } from '@mui/material';
+import { BarChart } from '@mui/x-charts/BarChart';
 import { Transaction } from '../types';
 
 interface TransactionChartProps {
@@ -12,7 +14,7 @@ interface MonthlyData {
 }
 
 export default function TransactionChart({ transactions }: TransactionChartProps) {
-  const chartData = useMemo((): [string, MonthlyData][] => {
+  const chartData = useMemo(() => {
     const monthlyData: Record<string, MonthlyData> = {};
     
     transactions.forEach(transaction => {
@@ -35,14 +37,22 @@ export default function TransactionChart({ transactions }: TransactionChartProps
     });
 
     const sortedEntries = Object.entries(monthlyData).sort(([a], [b]) => a.localeCompare(b));
-    return sortedEntries;
+    
+    return {
+      months: sortedEntries.map(([monthKey]) => formatMonth(monthKey)),
+      income: sortedEntries.map(([_, data]) => data.income),
+      expense: sortedEntries.map(([_, data]) => data.expense),
+      net: sortedEntries.map(([_, data]) => data.net),
+    };
   }, [transactions]);
 
-  const maxValue = useMemo(() => {
-    return Math.max(...chartData.map(([_, data]) => 
-      Math.max(data.income, data.expense)
-    ), 1000);
-  }, [chartData]);
+  const formatMonth = (monthKey: string): string => {
+    const [year, month] = monthKey.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('tr-TR', { 
+      year: 'numeric', 
+      month: 'short' 
+    });
+  };
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('tr-TR', {
@@ -53,66 +63,49 @@ export default function TransactionChart({ transactions }: TransactionChartProps
     }).format(amount);
   };
 
-  const formatMonth = (monthKey: string): string => {
-    const [year, month] = monthKey.split('-');
-    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('tr-TR', { 
-      year: 'numeric', 
-      month: 'short' 
-    });
-  };
-
   return (
-    <div className="transaction-chart">
-      <h3>Aylık Gelir-Gider Özeti</h3>
+    <Box>
+      <Typography variant="h4" component="h3" gutterBottom sx={{ mb: 3 }}>
+        Aylık Gelir-Gider Özeti
+      </Typography>
       
-      {chartData.length === 0 ? (
-        <div className="no-chart-data">
-          <p>Grafik için yeterli veri bulunmuyor.</p>
-        </div>
+      {chartData.months.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body1" color="text.secondary">
+            Grafik için yeterli veri bulunmuyor.
+          </Typography>
+        </Box>
       ) : (
-        <div className="chart-container">
-          <div className="chart-bars">
-            {chartData.map(([monthKey, data]) => (
-              <div key={monthKey} className="bar-group">
-                <div className="month-label">{formatMonth(monthKey)}</div>
-                
-                <div className="bars">
-                  <div 
-                    className="bar income-bar" 
-                    style={{ height: `${(data.income / maxValue) * 200}px` }}
-                    title={`Gelir: ${formatCurrency(data.income)}`}
-                  >
-                    <span className="bar-value">{formatCurrency(data.income)}</span>
-                  </div>
-                  
-                  <div 
-                    className="bar expense-bar" 
-                    style={{ height: `${(data.expense / maxValue) * 200}px` }}
-                    title={`Gider: ${formatCurrency(data.expense)}`}
-                  >
-                    <span className="bar-value">{formatCurrency(data.expense)}</span>
-                  </div>
-                </div>
-                
-                <div className={`net-amount ${data.net >= 0 ? 'positive' : 'negative'}`}>
-                  Net: {formatCurrency(data.net)}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="chart-legend">
-            <div className="legend-item">
-              <div className="legend-color income"></div>
-              <span>Gelir</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color expense"></div>
-              <span>Gider</span>
-            </div>
-          </div>
-        </div>
+        <Box sx={{ width: '100%', height: 400 }}>
+          <BarChart
+            xAxis={[
+              {
+                id: 'months',
+                data: chartData.months,
+                scaleType: 'band',
+              },
+            ]}
+            series={[
+              {
+                id: 'income',
+                label: 'Gelir',
+                data: chartData.income,
+                color: '#4caf50',
+                valueFormatter: (value) => formatCurrency(value as number),
+              },
+              {
+                id: 'expense',
+                label: 'Gider', 
+                data: chartData.expense,
+                color: '#f44336',
+                valueFormatter: (value) => formatCurrency(value as number),
+              },
+            ]}
+            margin={{ left: 100, bottom: 50, top: 50, right: 50 }}
+            grid={{ horizontal: true }}
+          />
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

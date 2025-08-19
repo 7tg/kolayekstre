@@ -1,53 +1,41 @@
 import { useState, useMemo } from 'react';
+import { 
+  Box, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  Typography,
+  Chip
+} from '@mui/material';
+import { 
+  DataGrid, 
+  GridColDef, 
+  GridRenderCellParams
+} from '@mui/x-data-grid';
+import { 
+  TrendingUp as IncomeIcon,
+  TrendingDown as ExpenseIcon
+} from '@mui/icons-material';
 import { Transaction } from '../types';
 
 interface TransactionTableProps {
   transactions: Transaction[];
 }
 
-type SortField = 'date' | 'description' | 'amount' | 'balance';
-type SortDirection = 'asc' | 'desc';
 type FilterType = 'all' | 'income' | 'expense';
 
 export default function TransactionTable({ transactions }: TransactionTableProps) {
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filterType, setFilterType] = useState<FilterType>('all');
 
-  const filteredAndSortedTransactions = useMemo(() => {
-    let filtered = transactions;
-
+  const filteredTransactions = useMemo(() => {
     if (filterType === 'income') {
-      filtered = transactions.filter(t => t.amount > 0);
+      return transactions.filter(t => t.amount > 0);
     } else if (filterType === 'expense') {
-      filtered = transactions.filter(t => t.amount < 0);
+      return transactions.filter(t => t.amount < 0);
     }
-
-    return filtered.sort((a, b) => {
-      let aVal: any = a[sortField];
-      let bVal: any = b[sortField];
-
-      if (sortField === 'date') {
-        aVal = new Date(aVal || 0);
-        bVal = new Date(bVal || 0);
-      }
-
-      if (sortDirection === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-  }, [transactions, sortField, sortDirection, filterType]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  };
+    return transactions;
+  }, [transactions, filterType]);
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('tr-TR', {
@@ -60,63 +48,145 @@ export default function TransactionTable({ transactions }: TransactionTableProps
     return date ? new Date(date).toLocaleDateString('tr-TR') : '';
   };
 
+  const columns: GridColDef[] = [
+    {
+      field: 'date',
+      headerName: 'Tarih',
+      width: 120,
+      valueFormatter: (value) => 
+        value ? formatDate(new Date(value)) : '',
+      sortable: true,
+    },
+    {
+      field: 'description',
+      headerName: 'Açıklama',
+      flex: 1,
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'amount',
+      headerName: 'Tutar',
+      width: 140,
+      align: 'right',
+      headerAlign: 'right',
+      sortable: true,
+      renderCell: (params: GridRenderCellParams) => {
+        const amount = params.value as number;
+        const isPositive = amount >= 0;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {isPositive ? (
+              <IncomeIcon sx={{ fontSize: 16, color: 'success.main' }} />
+            ) : (
+              <ExpenseIcon sx={{ fontSize: 16, color: 'error.main' }} />
+            )}
+            <Typography
+              variant="body2"
+              sx={{
+                color: isPositive ? 'success.main' : 'error.main',
+                fontWeight: 'medium',
+              }}
+            >
+              {formatCurrency(amount)}
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'balance',
+      headerName: 'Bakiye',
+      width: 140,
+      align: 'right',
+      headerAlign: 'right',
+      sortable: true,
+      valueFormatter: (value) => 
+        formatCurrency(value as number),
+    },
+    {
+      field: 'bankType',
+      headerName: 'Banka',
+      width: 120,
+      sortable: true,
+      renderCell: (params: GridRenderCellParams) => {
+        const bankType = params.value as string;
+        return bankType ? (
+          <Chip 
+            label={bankType} 
+            size="small" 
+            variant="outlined" 
+            color="primary" 
+          />
+        ) : null;
+      },
+    },
+  ];
+
   return (
-    <div className="transaction-table-container">
-      <div className="table-controls">
-        <select 
-          value={filterType} 
-          onChange={(e) => setFilterType(e.target.value as FilterType)}
-          className="filter-select"
-        >
-          <option value="all">Tüm İşlemler</option>
-          <option value="income">Gelen</option>
-          <option value="expense">Giden</option>
-        </select>
-        <span className="transaction-count">
-          {filteredAndSortedTransactions.length} işlem
-        </span>
-      </div>
+    <Box>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Filtre</InputLabel>
+          <Select
+            value={filterType}
+            label="Filtre"
+            onChange={(e) => setFilterType(e.target.value as FilterType)}
+          >
+            <MenuItem value="all">Tüm İşlemler</MenuItem>
+            <MenuItem value="income">Gelen</MenuItem>
+            <MenuItem value="expense">Giden</MenuItem>
+          </Select>
+        </FormControl>
+        <Typography variant="body2" color="text.secondary">
+          {filteredTransactions.length} işlem
+        </Typography>
+      </Box>
 
-      <div className="table-wrapper">
-        <table className="transaction-table">
-          <thead>
-            <tr>
-              <th onClick={() => handleSort('date')}>
-                Tarih {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th onClick={() => handleSort('description')}>
-                Açıklama {sortField === 'description' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th onClick={() => handleSort('amount')}>
-                Tutar {sortField === 'amount' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th onClick={() => handleSort('balance')}>
-                Bakiye {sortField === 'balance' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th>Banka</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAndSortedTransactions.map((transaction) => (
-              <tr key={transaction.id} className={transaction.amount >= 0 ? 'income' : 'expense'}>
-                <td>{formatDate(transaction.date)}</td>
-                <td title={transaction.description}>{transaction.description}</td>
-                <td className={transaction.amount >= 0 ? 'amount-positive' : 'amount-negative'}>
-                  {formatCurrency(transaction.amount)}
-                </td>
-                <td>{formatCurrency(transaction.balance)}</td>
-                <td className="bank-type">{transaction.bankType || ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredAndSortedTransactions.length === 0 && (
-          <div className="no-data">
-            <p>Henüz işlem bulunmuyor.</p>
-          </div>
-        )}
-      </div>
-    </div>
+      <Box sx={{ height: 600, width: '100%' }}>
+        <DataGrid
+          rows={filteredTransactions}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 10 },
+            },
+            sorting: {
+              sortModel: [{ field: 'date', sort: 'desc' }],
+            },
+          }}
+          pageSizeOptions={[5, 10, 20, 50]}
+          checkboxSelection={false}
+          disableRowSelectionOnClick
+          localeText={{
+            // Toolbar
+            toolbarDensity: 'Yoğunluk',
+            toolbarDensityLabel: 'Yoğunluk',
+            toolbarDensityCompact: 'Sıkışık',
+            toolbarDensityStandard: 'Standart',
+            toolbarDensityComfortable: 'Rahat',
+            toolbarColumns: 'Sütunlar',
+            toolbarColumnsLabel: 'Sütunları seç',
+            toolbarFilters: 'Filtreler',
+            toolbarFiltersLabel: 'Filtreleri göster',
+            toolbarFiltersTooltipHide: 'Filtreleri gizle',
+            toolbarFiltersTooltipShow: 'Filtreleri göster',
+            // No rows
+            noRowsLabel: 'Veri bulunamadı',
+          }}
+          sx={{
+            '& .MuiDataGrid-cell': {
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: 'background.paper',
+              borderBottom: '2px solid',
+              borderColor: 'divider',
+            },
+          }}
+        />
+      </Box>
+    </Box>
   );
 }

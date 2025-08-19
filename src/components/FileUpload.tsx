@@ -1,4 +1,21 @@
 import { useState, useRef } from 'react';
+import { 
+  Paper, 
+  Box, 
+  Typography, 
+  Button, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  CircularProgress,
+  Alert
+} from '@mui/material';
+import { 
+  CloudUpload as UploadIcon, 
+  Description as FileIcon,
+  AccountBalance as BankIcon
+} from '@mui/icons-material';
 import BankStatementParser from '../parsers/BankStatementParser';
 import { ParseResult } from '../types';
 
@@ -32,7 +49,8 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
         await onTransactionsLoaded(result);
       }
     } catch (error) {
-      alert(`Dosya işleme hatası: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('File processing error:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -64,22 +82,39 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
   };
 
   return (
-    <div className="file-upload-section">
-      <div className="bank-selector">
-        <label htmlFor="bank-select">Banka Seçimi:</label>
-        <select 
-          id="bank-select"
-          value={selectedBank} 
-          onChange={(e) => setSelectedBank(e.target.value)}
-          disabled={isLoading}
-        >
-          <option value="auto">Otomatik Tespit</option>
-          <option value="ziraat">Ziraat Bankası</option>
-        </select>
-      </div>
+    <Paper elevation={2} sx={{ p: 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <FormControl fullWidth size="small">
+          <InputLabel id="bank-select-label">Banka Seçimi</InputLabel>
+          <Select 
+            labelId="bank-select-label"
+            value={selectedBank} 
+            label="Banka Seçimi"
+            onChange={(e) => setSelectedBank(e.target.value)}
+            disabled={isLoading}
+            startAdornment={<BankIcon sx={{ mr: 1, color: 'text.secondary' }} />}
+          >
+            <MenuItem value="auto">Otomatik Tespit</MenuItem>
+            <MenuItem value="ziraat">Ziraat Bankası</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
-      <div 
-        className={`upload-area ${dragOver ? 'drag-over' : ''} ${isLoading ? 'loading' : ''}`}
+      <Paper 
+        variant="outlined"
+        sx={{
+          p: 4,
+          textAlign: 'center',
+          cursor: isLoading ? 'default' : 'pointer',
+          border: dragOver ? '2px dashed' : '2px dashed transparent',
+          borderColor: dragOver ? 'primary.main' : 'divider',
+          bgcolor: dragOver ? 'action.hover' : 'background.paper',
+          transition: 'all 0.2s ease-in-out',
+          '&:hover': isLoading ? {} : {
+            bgcolor: 'action.hover',
+            borderColor: 'primary.light'
+          }
+        }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -96,25 +131,39 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
         />
         
         {isLoading ? (
-          <div className="loading-content">
-            <div className="spinner"></div>
-            <p>Dosyalar işleniyor...</p>
-          </div>
+          <Box>
+            <CircularProgress size={40} sx={{ mb: 2 }} />
+            <Typography variant="h6">Dosyalar işleniyor...</Typography>
+          </Box>
         ) : (
-          <div className="upload-content">
-            <div className="upload-icon">📁</div>
-            <h3>Banka Ekstresini Yükleyin</h3>
-            <p>Excel dosyalarınızı buraya sürükleyip bırakın veya tıklayarak seçin</p>
-            <div className="supported-formats">
-              <small>Desteklenen formatlar: .xlsx, .xls</small>
-            </div>
-          </div>
+          <Box>
+            <FileIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+            <Typography variant="h5" component="h3" gutterBottom>
+              Banka Ekstresini Yükleyin
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Excel dosyalarınızı buraya sürükleyip bırakın veya tıklayarak seçin
+            </Typography>
+            <Button 
+              variant="contained" 
+              startIcon={<UploadIcon />}
+              size="large"
+              sx={{ mb: 2 }}
+            >
+              Dosya Seç
+            </Button>
+            <Typography variant="caption" display="block" color="text.secondary">
+              Desteklenen formatlar: .xlsx, .xls
+            </Typography>
+          </Box>
         )}
-      </div>
+      </Paper>
       
-      <div className="upload-info">
-        <p><strong>Not:</strong> Aynı işlemler tekrar yüklenmez, sadece yeni veriler eklenir.</p>
-      </div>
-    </div>
+      <Alert severity="info" sx={{ mt: 2 }}>
+        <Typography variant="body2">
+          <strong>Not:</strong> Aynı işlemler tekrar yüklenmez, sadece yeni veriler eklenir.
+        </Typography>
+      </Alert>
+    </Paper>
   );
 }
