@@ -7,6 +7,7 @@ export interface Transaction {
   type: 'income' | 'expense' | 'unknown';
   rawData: any[];
   bankType?: string;
+  iban: string;
 }
 
 export interface ParseResult {
@@ -14,6 +15,7 @@ export interface ParseResult {
   bankType: string;
   fileName: string;
   errors: string[];
+  iban: string;
 }
 
 export interface BankParser {
@@ -45,6 +47,15 @@ export interface FilterOptions {
   dateFrom?: Date;
   dateTo?: Date;
   searchTerm?: string;
+}
+
+export interface TransactionsByIBAN {
+  [iban: string]: {
+    iban: string;
+    transactions: Transaction[];
+    bankType: string;
+    stats?: StatsSummary;
+  };
 }
 
 export interface FileUploadProps {

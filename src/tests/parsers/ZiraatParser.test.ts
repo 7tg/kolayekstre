@@ -161,11 +161,85 @@ describe('ZiraatParser', () => {
     })
   })
 
+  describe('IBAN extraction', () => {
+    test('should extract IBAN from document header in column format', () => {
+      const mockData = [
+        ['Ziraat Bankası Hesap Ekstresi'],
+        ['IBAN', '', 'TR770001004007794067385002'],
+        [''],
+        ['Tarih', 'İşlem Açıklama', 'Borç', 'Alacak', 'Bakiye'],
+        ['01.01.2023', 'Test Transaction', '100,00', '', '900,00']
+      ]
+
+      const worksheet = XLSX.utils.aoa_to_sheet(mockData)
+      const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
+      
+      const result = parser.parse(workbook)
+      
+      expect(result.iban).toBe('TR770001004007794067385002')
+      expect(result.transactions[0].iban).toBe('TR770001004007794067385002')
+    })
+
+    test('should extract IBAN from inline format', () => {
+      const mockData = [
+        ['Ziraat Bankası Hesap Ekstresi'],
+        ['IBAN: TR123456789012345678901234'],
+        [''],
+        ['Tarih', 'İşlem Açıklama', 'Borç', 'Alacak', 'Bakiye'],
+        ['01.01.2023', 'Test Transaction', '100,00', '', '900,00']
+      ]
+
+      const worksheet = XLSX.utils.aoa_to_sheet(mockData)
+      const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
+      
+      const result = parser.parse(workbook)
+      
+      expect(result.iban).toBe('TR123456789012345678901234')
+      expect(result.transactions[0].iban).toBe('TR123456789012345678901234')
+    })
+
+    test('should extract account number when IBAN not present', () => {
+      const mockData = [
+        ['Ziraat Bankası Hesap Ekstresi'],
+        ['Hesap No: 12345678'],
+        [''],
+        ['Tarih', 'İşlem Açıklama', 'Borç', 'Alacak', 'Bakiye'],
+        ['01.01.2023', 'Test Transaction', '100,00', '', '900,00']
+      ]
+
+      const worksheet = XLSX.utils.aoa_to_sheet(mockData)
+      const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
+      
+      const result = parser.parse(workbook)
+      
+      expect(result.iban).toBe('Account: 12345678')
+      expect(result.transactions[0].iban).toBe('Account: 12345678')
+    })
+
+    test('should return error when IBAN/account info is missing', () => {
+      const mockData = [
+        ['Ziraat Bankası Hesap Ekstresi'],
+        [''],
+        ['Tarih', 'İşlem Açıklama', 'Borç', 'Alacak', 'Bakiye'],
+        ['01.01.2023', 'Test Transaction', '100,00', '', '900,00']
+      ]
+
+      const worksheet = XLSX.utils.aoa_to_sheet(mockData)
+      const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
+      
+      const result = parser.parse(workbook)
+      
+      expect(result.iban).toBe('UNKNOWN')
+      expect(result.errors).toContain('Unable to extract IBAN from Ziraat bank statement. IBAN is required for processing.')
+      expect(result.transactions).toHaveLength(0)
+    })
+  })
+
   describe('parse with mock data', () => {
     test('should parse mock Ziraat data correctly', () => {
       const mockData = [
         ['Ziraat Bankası Hesap Ekstresi'],
-        ['Hesap No: 12345678'],
+        ['IBAN', '', 'TR770001004007794067385002'],
         [''],
         ['Tarih', 'İşlem Açıklama', 'Borç', 'Alacak', 'Bakiye'],
         ['01.01.2023', 'Maaş Yatırımı', '', '5.000,00', '5.000,00'],
@@ -219,7 +293,7 @@ describe('ZiraatParser', () => {
       const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
       
       const result = parser.parse(workbook)
-      expect(result.errors).toContain('Unable to find header row in Ziraat bank statement. Expected columns: Tarih, Açıklama, Tutar')
+      expect(result.errors).toContain('Unable to extract IBAN from Ziraat bank statement. IBAN is required for processing.')
       expect(result.transactions).toHaveLength(0)
     })
 
@@ -229,12 +303,13 @@ describe('ZiraatParser', () => {
       const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
       
       const result = parser.parse(workbook)
-      expect(result.errors).toContain('Unable to find header row in Ziraat bank statement. Expected columns: Tarih, Açıklama, Tutar')
+      expect(result.errors).toContain('Unable to extract IBAN from Ziraat bank statement. IBAN is required for processing.')
       expect(result.transactions).toHaveLength(0)
     })
 
     test('should filter out invalid transaction rows', () => {
       const mockData = [
+        ['IBAN', '', 'TR770001004007794067385002'],
         ['Tarih', 'Açıklama', 'Tutar', 'Bakiye'],
         ['01.01.2023', 'Valid Transaction', '100,00', '1.000,00'],
         ['', '', '', ''], // Empty row

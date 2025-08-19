@@ -48,6 +48,11 @@ export class BankStatementParser {
     try {
       const result = parser.parse(workbook);
       
+      // Check for parsing errors first
+      if (result.errors && result.errors.length > 0) {
+        throw new Error(result.errors.join('; '));
+      }
+      
       if (!result.transactions || result.transactions.length === 0) {
         throw new Error('No valid transactions found in the file');
       }
@@ -99,7 +104,9 @@ export class BankStatementParser {
       !isNaN(transaction.date.getTime()) &&
       typeof transaction.description === 'string' &&
       typeof transaction.amount === 'number' &&
-      ['income', 'expense', 'unknown'].includes(transaction.type)
+      ['income', 'expense', 'unknown'].includes(transaction.type) &&
+      typeof transaction.iban === 'string' &&
+      transaction.iban.length > 0
     );
   }
 }

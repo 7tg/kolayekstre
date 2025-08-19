@@ -91,6 +91,7 @@ describe('BankStatementParser', () => {
   describe('parseFile', () => {
     test('should parse file with auto detection', async () => {
       const mockData = [
+        ['IBAN', '', 'TR770001004007794067385002'],
         ['Tarih', 'Açıklama', 'Tutar', 'Bakiye'],
         ['01.01.2023', 'Test Transaction', '100,00', '1.000,00']
       ]
@@ -112,6 +113,7 @@ describe('BankStatementParser', () => {
 
     test('should parse file with specified bank type', async () => {
       const mockData = [
+        ['IBAN', '', 'TR770001004007794067385002'],
         ['Tarih', 'Açıklama', 'Tutar', 'Bakiye'],
         ['01.01.2023', 'Test Transaction', '100,00', '1.000,00']
       ]
@@ -240,7 +242,8 @@ describe('BankStatementParser', () => {
         amount: 100,
         balance: 1000,
         type: 'income',
-        rawData: []
+        rawData: [],
+        iban: 'TR770001004007794067385002'
       }
       
       expect(BankStatementParser.validateTransaction(validTransaction)).toBe(true)
@@ -255,6 +258,8 @@ describe('BankStatementParser', () => {
         { id: 'test', date: new Date(), description: 123 }, // description should be string
         { id: 'test', date: new Date(), description: 'test', amount: 'invalid' }, // amount should be number
         { id: 'test', date: new Date(), description: 'test', amount: 100, type: 'invalid' }, // invalid type
+        { id: 'test', date: new Date(), description: 'test', amount: 100, balance: 1000, type: 'income', rawData: [] }, // missing IBAN
+        { id: 'test', date: new Date(), description: 'test', amount: 100, balance: 1000, type: 'income', rawData: [], iban: '' }, // empty IBAN
       ]
       
       invalidTransactions.forEach(transaction => {

@@ -152,7 +152,8 @@ export abstract class BaseParser implements BankParser {
       amount: 0,
       balance: 0,
       type: 'unknown',
-      rawData: row
+      rawData: row,
+      iban: 'UNKNOWN'
     };
   }
 }
