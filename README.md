@@ -2,6 +2,8 @@
 
 **KolayEkstre** (Turkish for "Easy Statement") is a privacy-focused web application that allows you to parse, analyze, and visualize your Turkish bank statements locally in your browser. Your financial data never leaves your device.
 
+> **🇹🇷 Türkçe okumak için:** [README.tr.md](README.tr.md)
+
 ## 🚀 Features
 
 ### 🏦 Multi-Bank Support
