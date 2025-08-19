@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Box, 
   FormControl, 
@@ -26,6 +27,7 @@ interface TransactionTableProps {
 type FilterType = 'all' | 'income' | 'expense';
 
 export default function TransactionTable({ transactions }: TransactionTableProps) {
+  const { t, i18n } = useTranslation();
   const [filterType, setFilterType] = useState<FilterType>('all');
 
   const filteredTransactions = useMemo(() => {
@@ -38,20 +40,23 @@ export default function TransactionTable({ transactions }: TransactionTableProps
   }, [transactions, filterType]);
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('tr-TR', {
+    const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
+    const currency = i18n.language === 'tr' ? 'TRY' : 'USD';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'TRY'
+      currency: currency
     }).format(amount);
   };
 
   const formatDate = (date: Date | null): string => {
-    return date ? new Date(date).toLocaleDateString('tr-TR') : '';
+    const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
+    return date ? new Date(date).toLocaleDateString(locale) : '';
   };
 
   const columns: GridColDef[] = [
     {
       field: 'date',
-      headerName: 'Tarih',
+      headerName: t('date'),
       width: 120,
       valueFormatter: (value) => 
         value ? formatDate(new Date(value)) : '',
@@ -59,14 +64,14 @@ export default function TransactionTable({ transactions }: TransactionTableProps
     },
     {
       field: 'description',
-      headerName: 'Açıklama',
+      headerName: t('description'),
       flex: 1,
       minWidth: 200,
       sortable: true,
     },
     {
       field: 'amount',
-      headerName: 'Tutar',
+      headerName: t('amount'),
       width: 140,
       align: 'right',
       headerAlign: 'right',
@@ -96,7 +101,7 @@ export default function TransactionTable({ transactions }: TransactionTableProps
     },
     {
       field: 'balance',
-      headerName: 'Bakiye',
+      headerName: t('balance'),
       width: 140,
       align: 'right',
       headerAlign: 'right',
@@ -106,7 +111,7 @@ export default function TransactionTable({ transactions }: TransactionTableProps
     },
     {
       field: 'bankType',
-      headerName: 'Banka',
+      headerName: 'Bank',
       width: 120,
       sortable: true,
       renderCell: (params: GridRenderCellParams) => {
@@ -127,19 +132,19 @@ export default function TransactionTable({ transactions }: TransactionTableProps
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Filtre</InputLabel>
+          <InputLabel>Filter</InputLabel>
           <Select
             value={filterType}
-            label="Filtre"
+            label="Filter"
             onChange={(e) => setFilterType(e.target.value as FilterType)}
           >
-            <MenuItem value="all">Tüm İşlemler</MenuItem>
-            <MenuItem value="income">Gelen</MenuItem>
-            <MenuItem value="expense">Giden</MenuItem>
+            <MenuItem value="all">All Transactions</MenuItem>
+            <MenuItem value="income">{t('income')}</MenuItem>
+            <MenuItem value="expense">{t('expense')}</MenuItem>
           </Select>
         </FormControl>
         <Typography variant="body2" color="text.secondary">
-          {filteredTransactions.length} işlem
+          {filteredTransactions.length} transactions
         </Typography>
       </Box>
 

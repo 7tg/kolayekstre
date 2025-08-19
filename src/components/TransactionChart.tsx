@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { Transaction } from '../types';
@@ -14,6 +15,7 @@ interface MonthlyData {
 }
 
 export default function TransactionChart({ transactions }: TransactionChartProps) {
+  const { t, i18n } = useTranslation();
   const chartData = useMemo(() => {
     const monthlyData: Record<string, MonthlyData> = {};
     
@@ -48,16 +50,19 @@ export default function TransactionChart({ transactions }: TransactionChartProps
 
   const formatMonth = (monthKey: string): string => {
     const [year, month] = monthKey.split('-');
-    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('tr-TR', { 
+    const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(locale, { 
       year: 'numeric', 
       month: 'short' 
     });
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('tr-TR', {
+    const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
+    const currency = i18n.language === 'tr' ? 'TRY' : 'USD';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'TRY',
+      currency: currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
@@ -66,13 +71,13 @@ export default function TransactionChart({ transactions }: TransactionChartProps
   return (
     <Box>
       <Typography variant="h4" component="h3" gutterBottom sx={{ mb: 3 }}>
-        Aylık Gelir-Gider Özeti
+        {t('monthlyTransactions')}
       </Typography>
       
       {chartData.months.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="body1" color="text.secondary">
-            Grafik için yeterli veri bulunmuyor.
+            Not enough data for chart.
           </Typography>
         </Box>
       ) : (
@@ -88,14 +93,14 @@ export default function TransactionChart({ transactions }: TransactionChartProps
             series={[
               {
                 id: 'income',
-                label: 'Gelir',
+                label: t('income'),
                 data: chartData.income,
                 color: '#4caf50',
                 valueFormatter: (value) => formatCurrency(value as number),
               },
               {
                 id: 'expense',
-                label: 'Gider', 
+                label: t('expense'), 
                 data: chartData.expense,
                 color: '#f44336',
                 valueFormatter: (value) => formatCurrency(value as number),

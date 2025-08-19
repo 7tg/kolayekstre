@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Paper, 
   Box, 
@@ -26,6 +27,7 @@ interface FileUploadProps {
 }
 
 export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoading }: FileUploadProps) {
+  const { t } = useTranslation();
   const [dragOver, setDragOver] = useState(false);
   const [selectedBank, setSelectedBank] = useState('auto');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +42,7 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
     try {
       for (const file of files) {
         if (!file.name.toLowerCase().includes('.xlsx') && !file.name.toLowerCase().includes('.xls')) {
-          throw new Error(`Desteklenmeyen dosya formatı: ${file.name}. Sadece Excel dosyaları (.xlsx, .xls) destekleniyor.`);
+          throw new Error(`Unsupported file format: ${file.name}. Only Excel files (.xlsx, .xls) are supported.`);
         }
 
         const bankType = selectedBank === 'auto' ? null : selectedBank;
@@ -85,17 +87,17 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
     <Paper elevation={2} sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
         <FormControl fullWidth size="small">
-          <InputLabel id="bank-select-label">Banka Seçimi</InputLabel>
+          <InputLabel id="bank-select-label">Bank Selection</InputLabel>
           <Select 
             labelId="bank-select-label"
             value={selectedBank} 
-            label="Banka Seçimi"
+            label="Bank Selection"
             onChange={(e) => setSelectedBank(e.target.value)}
             disabled={isLoading}
             startAdornment={<BankIcon sx={{ mr: 1, color: 'text.secondary' }} />}
           >
-            <MenuItem value="auto">Otomatik Tespit</MenuItem>
-            <MenuItem value="ziraat">Ziraat Bankası</MenuItem>
+            <MenuItem value="auto">Auto Detect</MenuItem>
+            <MenuItem value="ziraat">Ziraat Bank</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -133,16 +135,16 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
         {isLoading ? (
           <Box>
             <CircularProgress size={40} sx={{ mb: 2 }} />
-            <Typography variant="h6">Dosyalar işleniyor...</Typography>
+            <Typography variant="h6">{t('uploading')}</Typography>
           </Box>
         ) : (
           <Box>
             <FileIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
             <Typography variant="h5" component="h3" gutterBottom>
-              Banka Ekstresini Yükleyin
+              Upload Bank Statement
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Excel dosyalarınızı buraya sürükleyip bırakın veya tıklayarak seçin
+              {t('uploadArea')}
             </Typography>
             <Button 
               variant="contained" 
@@ -150,10 +152,10 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
               size="large"
               sx={{ mb: 2 }}
             >
-              Dosya Seç
+              {t('selectFiles')}
             </Button>
             <Typography variant="caption" display="block" color="text.secondary">
-              Desteklenen formatlar: .xlsx, .xls
+              Supported formats: .xlsx, .xls
             </Typography>
           </Box>
         )}
@@ -161,7 +163,7 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
       
       <Alert severity="info" sx={{ mt: 2 }}>
         <Typography variant="body2">
-          <strong>Not:</strong> Aynı işlemler tekrar yüklenmez, sadece yeni veriler eklenir.
+          <strong>Note:</strong> Duplicate transactions are not uploaded, only new data is added.
         </Typography>
       </Alert>
     </Paper>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Container, 
   Paper, 
@@ -26,6 +27,7 @@ import FileUpload from './components/FileUpload';
 import TransactionTable from './components/TransactionTable';
 import TransactionChart from './components/TransactionChart';
 import StatsPanel from './components/StatsPanel';
+import LanguageSelector from './components/LanguageSelector';
 import IndexedDBManager from './utils/indexedDB';
 import { Transaction, ParseResult } from './types';
 
@@ -38,6 +40,7 @@ interface ParsedResult extends ParseResult {
 }
 
 function App() {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dbManager] = useState<IndexedDBManager>(() => new IndexedDBManager());
@@ -70,13 +73,13 @@ function App() {
         await loadTransactions();
         setSnackbar({
           open: true,
-          message: `${result.added} yeni işlem eklendi. ${result.duplicates} işlem zaten mevcut olduğu için atlandı.`,
+          message: `${result.added} new transactions added. ${result.duplicates} transactions skipped (already exists).`,
           severity: 'success'
         });
       } else {
         setSnackbar({
           open: true,
-          message: 'Tüm işlemler zaten mevcut. Yeni işlem eklenmedi.',
+          message: 'All transactions already exist. No new transactions added.',
           severity: 'info'
         });
       }
@@ -84,7 +87,7 @@ function App() {
       console.error('Error saving transactions:', error);
       setSnackbar({
         open: true,
-        message: 'İşlemler kaydedilirken bir hata oluştu.',
+        message: 'Error occurred while saving transactions.',
         severity: 'error'
       });
     }
@@ -97,14 +100,14 @@ function App() {
       setClearDialogOpen(false);
       setSnackbar({
         open: true,
-        message: 'Tüm veriler silindi.',
+        message: 'All data cleared.',
         severity: 'success'
       });
     } catch (error) {
       console.error('Error clearing data:', error);
       setSnackbar({
         open: true,
-        message: 'Veriler silinirken bir hata oluştu.',
+        message: 'Error occurred while clearing data.',
         severity: 'error'
       });
     }
@@ -117,14 +120,20 @@ function App() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={0} sx={{ p: 3, mb: 3, textAlign: 'center', bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 1 }}>
-          <BankIcon sx={{ fontSize: 40 }} />
-          <Typography variant="h3" component="h1" fontWeight="bold">
-            Kolay Ekstre
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ flex: 1 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <BankIcon sx={{ fontSize: 40 }} />
+            <Typography variant="h3" component="h1" fontWeight="bold">
+              {t('appTitle')}
+            </Typography>
+          </Box>
+          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+            <LanguageSelector />
+          </Box>
         </Box>
         <Typography variant="h6" sx={{ opacity: 0.9 }}>
-          Banka ekstrelerinizi kolayca yükleyin ve analiz edin
+          {t('appTitle')}
         </Typography>
       </Paper>
 
@@ -141,19 +150,19 @@ function App() {
               <Tab 
                 value="stats" 
                 icon={<AnalyticsIcon />} 
-                label="İstatistikler" 
+                label={t('stats')} 
                 iconPosition="start"
               />
               <Tab 
                 value="chart" 
                 icon={<ChartIcon />} 
-                label="Grafik" 
+                label={t('chart')} 
                 iconPosition="start"
               />
               <Tab 
                 value="table" 
                 icon={<TableIcon />} 
-                label="Tablo" 
+                label={t('transactions')} 
                 iconPosition="start"
               />
             </Tabs>
@@ -164,7 +173,7 @@ function App() {
                 startIcon={<DeleteIcon />}
                 onClick={() => setClearDialogOpen(true)}
               >
-                Verileri Temizle
+                {t('clearData')}
               </Button>
             </Box>
           </Box>
@@ -181,27 +190,27 @@ function App() {
         <Paper elevation={2} sx={{ p: 6, textAlign: 'center', mt: 3 }}>
           <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>📄</Typography>
           <Typography variant="h5" component="h3" gutterBottom>
-            Henüz veri yok
+            {t('noTransactions')}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Başlamak için bir banka ekstresi yükleyin
+            {t('uploadArea')}
           </Typography>
         </Paper>
       )}
 
       <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
-        <DialogTitle>Verileri Temizle</DialogTitle>
+        <DialogTitle>{t('clearData')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Tüm veriler silinecek. Bu işlem geri alınamaz. Emin misiniz?
+            {t('clearDataConfirm')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setClearDialogOpen(false)}>
-            İptal
+            {t('cancel')}
           </Button>
           <Button onClick={handleClearData} color="error" variant="contained">
-            Sil
+            {t('delete')}
           </Button>
         </DialogActions>
       </Dialog>
