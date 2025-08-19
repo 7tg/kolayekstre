@@ -1,7 +1,10 @@
 import * as XLSX from 'xlsx';
-import { BaseParser } from '../BaseParser.js';
+import { BaseParser } from '../BaseParser';
+import { ParseResult, Transaction } from '../../types';
 
 export class ZiraatParser extends BaseParser {
+  private headerKeywords: string[];
+
   constructor() {
     super();
     this.bankType = 'ziraat';
@@ -16,26 +19,39 @@ export class ZiraatParser extends BaseParser {
     ];
   }
 
-  parse(workbook) {
+  parse(workbook: XLSX.WorkBook): ParseResult {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    const data: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    const transactions = [];
+    const transactions: Transaction[] = [];
+    const errors: string[] = [];
     let headerRowIndex = this.findHeaderRow(data, this.headerKeywords);
 
     if (headerRowIndex === -1) {
-      throw new Error('Unable to find header row in Ziraat bank statement. Expected columns: Tarih, Açıklama, Tutar');
+      const error = 'Unable to find header row in Ziraat bank statement. Expected columns: Tarih, Açıklama, Tutar';
+      errors.push(error);
+      return {
+        bankType: this.bankType,
+        transactions: [],
+        fileName: '',
+        errors
+      };
     }
 
-    const headers = data[headerRowIndex].map(h => h?.toString().trim().toLowerCase());
+    const headers = data[headerRowIndex].map((h: any) => h?.toString().trim().toLowerCase());
     
     for (let i = headerRowIndex + 1; i < data.length; i++) {
       const row = data[i];
       if (this.isValidTransactionRow(row)) {
-        const transaction = this.parseZiraatTransaction(row, headers);
-        if (transaction.date) {
-          transactions.push(transaction);
+        try {
+          const transaction = this.parseZiraatTransaction(row, headers);
+          if (transaction.date) {
+            transaction.bankType = this.bankType;
+            transactions.push(transaction);
+          }
+        } catch (error) {
+          errors.push(`Error parsing row ${i + 1}: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
     }
@@ -43,13 +59,12 @@ export class ZiraatParser extends BaseParser {
     return {
       bankType: this.bankType,
       transactions,
-      totalRows: transactions.length,
-      headerRow: headerRowIndex,
-      headers: headers
+      fileName: '',
+      errors
     };
   }
 
-  parseZiraatTransaction(row, headers) {
+  private parseZiraatTransaction(row: any[], headers: string[]): Transaction {
     const transaction = this.createBaseTransaction(row);
 
     for (let i = 0; i < headers.length && i < row.length; i++) {
@@ -69,69 +84,69 @@ export class ZiraatParser extends BaseParser {
       } else if (this.isDebitColumn(header)) {
         const amount = this.parseAmount(value);
         if (amount > 0) {
-          transaction.type = 'debit';
+          transaction.type = 'expense';
           transaction.amount = -Math.abs(amount);
         }
       } else if (this.isCreditColumn(header)) {
         const amount = this.parseAmount(value);
         if (amount > 0) {
-          transaction.type = 'credit';
+          transaction.type = 'income';
           transaction.amount = Math.abs(amount);
         }
       }
     }
 
     if (transaction.type === 'unknown' && transaction.amount !== 0) {
-      transaction.type = transaction.amount > 0 ? 'credit' : 'debit';
+      transaction.type = transaction.amount > 0 ? 'income' : 'expense';
     }
 
     return transaction;
   }
 
-  isDateColumn(header) {
+  private isDateColumn(header: string): boolean {
     return ['tarih', 'işlem tarihi', 'date', 'tarih/saat'].some(keyword => 
       header.includes(keyword)
     );
   }
 
-  isDescriptionColumn(header) {
+  private isDescriptionColumn(header: string): boolean {
     return ['açıklama', 'işlem açıklama', 'description', 'memo', 'detay'].some(keyword => 
       header.includes(keyword)
     );
   }
 
-  isAmountColumn(header) {
+  private isAmountColumn(header: string): boolean {
     return ['tutar', 'miktar', 'amount', 'işlem tutarı', 'i̇şlem tutari'].some(keyword => 
       header.includes(keyword)
     ) && !this.isBalanceColumn(header);
   }
 
-  isBalanceColumn(header) {
+  private isBalanceColumn(header: string): boolean {
     return ['bakiye', 'balance', 'kalan bakiye'].some(keyword => 
       header.includes(keyword)
     );
   }
 
-  isDebitColumn(header) {
+  private isDebitColumn(header: string): boolean {
     return ['borç', 'debit', 'gider', 'çıkış', 'ödeme'].some(keyword => 
       header.includes(keyword)
     );
   }
 
-  isCreditColumn(header) {
+  private isCreditColumn(header: string): boolean {
     return ['alacak', 'credit', 'gelir', 'giriş', 'para yatırma'].some(keyword => 
       header.includes(keyword)
     );
   }
 
-  static canParse(filename) {
+  static canParse(filename: string): boolean {
     const name = filename.toLowerCase();
     return name.includes('ziraat') || 
            name.includes('zb') ||
            name.includes('ziraat bank');
   }
 
-  static getDisplayName() {
+  static getDisplayName(): string {
     return 'Ziraat Bankası';
   }
 }

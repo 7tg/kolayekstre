@@ -1,6 +1,15 @@
 import { useMemo } from 'react';
 
-export function useLocale() {
+interface LocaleUtils {
+  locale: string;
+  formatCurrency: (amount: number, currency?: string) => string;
+  formatCurrencyCompact: (amount: number, currency?: string) => string;
+  formatDate: (date: Date | string, options?: Intl.DateTimeFormatOptions) => string;
+  formatNumber: (number: number) => string;
+  formatMonth: (monthKey: string) => string;
+}
+
+export function useLocale(): LocaleUtils {
   return useMemo(() => {
     // Use Turkish locale for banking app
     const userLocale = 'tr-TR';
@@ -8,14 +17,14 @@ export function useLocale() {
     return {
       locale: userLocale,
       
-      formatCurrency: (amount, currency = 'TRY') => {
+      formatCurrency: (amount: number, currency: string = 'TRY'): string => {
         return new Intl.NumberFormat(userLocale, {
           style: 'currency',
           currency: currency
         }).format(amount);
       },
       
-      formatCurrencyCompact: (amount, currency = 'TRY') => {
+      formatCurrencyCompact: (amount: number, currency: string = 'TRY'): string => {
         return new Intl.NumberFormat(userLocale, {
           style: 'currency',
           currency: currency,
@@ -24,17 +33,17 @@ export function useLocale() {
         }).format(amount);
       },
       
-      formatDate: (date, options = {}) => {
+      formatDate: (date: Date | string, options: Intl.DateTimeFormatOptions = {}): string => {
         return new Date(date).toLocaleDateString(userLocale, options);
       },
       
-      formatNumber: (number) => {
+      formatNumber: (number: number): string => {
         return new Intl.NumberFormat(userLocale).format(number);
       },
       
-      formatMonth: (monthKey) => {
+      formatMonth: (monthKey: string): string => {
         const [year, month] = monthKey.split('-');
-        return new Date(year, month - 1).toLocaleDateString(userLocale, { 
+        return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(userLocale, { 
           year: 'numeric', 
           month: 'short' 
         });

@@ -1,14 +1,21 @@
 import { useState, useRef } from 'react';
 import BankStatementParser from '../parsers/BankStatementParser';
+import { ParseResult } from '../types';
 
-export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoading }) {
+interface FileUploadProps {
+  onTransactionsLoaded: (result: ParseResult & { filename: string; fileSize: number; parsedAt: Date }) => Promise<void>;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+}
+
+export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoading }: FileUploadProps) {
   const [dragOver, setDragOver] = useState(false);
   const [selectedBank, setSelectedBank] = useState('auto');
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const parser = new BankStatementParser();
 
-  const handleFiles = async (files) => {
+  const handleFiles = async (files: File[]) => {
     if (!files || files.length === 0) return;
 
     setIsLoading(true);
@@ -25,29 +32,33 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
         await onTransactionsLoaded(result);
       }
     } catch (error) {
-      alert(`Dosya işleme hatası: ${error.message}`);
+      alert(`Dosya işleme hatası: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFileSelect = (event) => {
-    handleFiles(Array.from(event.target.files));
-    event.target.value = '';
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      handleFiles(Array.from(event.target.files));
+      event.target.value = '';
+    }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragOver(false);
-    handleFiles(Array.from(event.dataTransfer.files));
+    if (event.dataTransfer.files) {
+      handleFiles(Array.from(event.dataTransfer.files));
+    }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragOver(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragOver(false);
   };

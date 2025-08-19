@@ -1,13 +1,40 @@
+import { Transaction } from '../types';
+
 const DB_NAME = 'BankStatementsDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'transactions';
 
-class IndexedDBManager {
-  constructor() {
-    this.db = null;
-  }
+interface AddTransactionResult {
+  added: number;
+  duplicates: number;
+  errors?: number;
+}
 
-  async init() {
+interface DBFilters {
+  bankType?: string;
+  dateFrom?: Date | string;
+  dateTo?: Date | string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+interface DBStats {
+  totalTransactions: number;
+  totalIncome: number;
+  totalExpenses: number;
+  bankTypes: string[];
+  dateRange: {
+    earliest: Date | null;
+    latest: Date | null;
+  };
+}
+
+class IndexedDBManager {
+  private db: IDBDatabase | null = null;
+
+  constructor() {}
+
+  async init(): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -17,8 +44,8 @@ class IndexedDBManager {
         resolve();
       };
 
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
+      request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        const db = (event.target as IDBOpenDBRequest).result;
         
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
@@ -32,7 +59,7 @@ class IndexedDBManager {
     });
   }
 
-  async addTransactions(transactions, bankType) {
+  async addTransactions(transactions: Transaction[], bankType: string): Promise<AddTransactionResult> {
     if (!this.db) await this.init();
 
     const existingIds = await this.getAllTransactionIds();
@@ -43,7 +70,7 @@ class IndexedDBManager {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       
       let addedCount = 0;
@@ -85,54 +112,54 @@ class IndexedDBManager {
     });
   }
 
-  async getAllTransactionIds() {
+  async getAllTransactionIds(): Promise<Set<string>> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      const transaction = this.db!.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAllKeys();
 
       request.onsuccess = () => {
-        resolve(new Set(request.result));
+        resolve(new Set(request.result as string[]));
       };
 
       request.onerror = () => reject(request.error);
     });
   }
 
-  async getAllTransactions(filters = {}) {
+  async getAllTransactions(filters: DBFilters = {}): Promise<Transaction[]> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      const transaction = this.db!.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAll();
 
       request.onsuccess = () => {
-        let results = request.result;
+        let results: Transaction[] = request.result;
         
         if (filters.bankType) {
           results = results.filter(t => t.bankType === filters.bankType);
         }
         
         if (filters.dateFrom) {
-          results = results.filter(t => new Date(t.date) >= new Date(filters.dateFrom));
+          results = results.filter(t => new Date(t.date!) >= new Date(filters.dateFrom!));
         }
         
         if (filters.dateTo) {
-          results = results.filter(t => new Date(t.date) <= new Date(filters.dateTo));
+          results = results.filter(t => new Date(t.date!) <= new Date(filters.dateTo!));
         }
         
         if (filters.minAmount !== undefined) {
-          results = results.filter(t => t.amount >= filters.minAmount);
+          results = results.filter(t => t.amount >= filters.minAmount!);
         }
         
         if (filters.maxAmount !== undefined) {
-          results = results.filter(t => t.amount <= filters.maxAmount);
+          results = results.filter(t => t.amount <= filters.maxAmount!);
         }
         
-        results.sort((a, b) => new Date(b.date) - new Date(a.date));
+        results.sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime());
         
         resolve(results);
       };
@@ -141,11 +168,11 @@ class IndexedDBManager {
     });
   }
 
-  async getTransactionsByDateRange(startDate, endDate) {
+  async getTransactionsByDateRange(startDate: Date, endDate: Date): Promise<Transaction[]> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      const transaction = this.db!.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const index = store.index('date');
       
@@ -157,11 +184,11 @@ class IndexedDBManager {
     });
   }
 
-  async clearAllData() {
+  async clearAllData(): Promise<void> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.clear();
 
@@ -170,19 +197,21 @@ class IndexedDBManager {
     });
   }
 
-  async getStats() {
+  async getStats(): Promise<DBStats> {
     const transactions = await this.getAllTransactions();
     
-    const stats = {
+    const stats: DBStats = {
       totalTransactions: transactions.length,
       totalIncome: 0,
       totalExpenses: 0,
-      bankTypes: new Set(),
+      bankTypes: [],
       dateRange: {
         earliest: null,
         latest: null
       }
     };
+
+    const bankTypesSet = new Set<string>();
 
     transactions.forEach(t => {
       if (t.amount > 0) {
@@ -191,18 +220,22 @@ class IndexedDBManager {
         stats.totalExpenses += Math.abs(t.amount);
       }
       
-      stats.bankTypes.add(t.bankType);
-      
-      const date = new Date(t.date);
-      if (!stats.dateRange.earliest || date < stats.dateRange.earliest) {
-        stats.dateRange.earliest = date;
+      if (t.bankType) {
+        bankTypesSet.add(t.bankType);
       }
-      if (!stats.dateRange.latest || date > stats.dateRange.latest) {
-        stats.dateRange.latest = date;
+      
+      if (t.date) {
+        const date = new Date(t.date);
+        if (!stats.dateRange.earliest || date < stats.dateRange.earliest) {
+          stats.dateRange.earliest = date;
+        }
+        if (!stats.dateRange.latest || date > stats.dateRange.latest) {
+          stats.dateRange.latest = date;
+        }
       }
     });
 
-    stats.bankTypes = Array.from(stats.bankTypes);
+    stats.bankTypes = Array.from(bankTypesSet);
     
     return stats;
   }

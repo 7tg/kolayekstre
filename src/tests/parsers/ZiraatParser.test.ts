@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from 'vitest'
 import * as XLSX from 'xlsx'
-import { ZiraatParser } from '../../parsers/banks/ZiraatParser.js'
+import { ZiraatParser } from '../../parsers/banks/ZiraatParser'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -91,7 +91,7 @@ describe('ZiraatParser', () => {
       expect(transaction.description).toBe('Test işlem')
       expect(transaction.amount).toBe(1000.5)
       expect(transaction.balance).toBe(5000)
-      expect(transaction.type).toBe('credit') // Positive amount
+      expect(transaction.type).toBe('income') // Positive amount
       expect(transaction.date).toBeInstanceOf(Date)
     })
 
@@ -103,10 +103,10 @@ describe('ZiraatParser', () => {
       const debitTransaction = parser.parseZiraatTransaction(debitRow, headers)
       const creditTransaction = parser.parseZiraatTransaction(creditRow, headers)
       
-      expect(debitTransaction.type).toBe('debit')
+      expect(debitTransaction.type).toBe('expense')
       expect(debitTransaction.amount).toBe(-500)
       
-      expect(creditTransaction.type).toBe('credit')
+      expect(creditTransaction.type).toBe('income')
       expect(creditTransaction.amount).toBe(1000)
     })
 
@@ -138,14 +138,8 @@ describe('ZiraatParser', () => {
       
       expect(result).toHaveProperty('bankType', 'ziraat')
       expect(result).toHaveProperty('transactions')
-      expect(result).toHaveProperty('totalRows')
-      expect(result).toHaveProperty('headerRow')
-      expect(result).toHaveProperty('headers')
       
       expect(Array.isArray(result.transactions)).toBe(true)
-      expect(typeof result.totalRows).toBe('number')
-      expect(typeof result.headerRow).toBe('number')
-      expect(Array.isArray(result.headers)).toBe(true)
       
       if (result.transactions.length > 0) {
         const transaction = result.transactions[0]
@@ -161,7 +155,7 @@ describe('ZiraatParser', () => {
         expect(transaction.date).toBeInstanceOf(Date)
         expect(typeof transaction.description).toBe('string')
         expect(typeof transaction.amount).toBe('number')
-        expect(['credit', 'debit', 'unknown']).toContain(transaction.type)
+        expect(['income', 'expense', 'unknown']).toContain(transaction.type)
         expect(Array.isArray(transaction.rawData)).toBe(true)
       }
     })
@@ -187,32 +181,31 @@ describe('ZiraatParser', () => {
       
       expect(result.bankType).toBe('ziraat')
       expect(result.transactions).toHaveLength(4)
-      expect(result.headerRow).toBe(3)
       
       const transactions = result.transactions
       
       // Salary deposit
       expect(transactions[0].description).toBe('Maaş Yatırımı')
       expect(transactions[0].amount).toBe(5000)
-      expect(transactions[0].type).toBe('credit')
+      expect(transactions[0].type).toBe('income')
       expect(transactions[0].balance).toBe(5000)
       
       // Market shopping
       expect(transactions[1].description).toBe('Market Alışverişi')
       expect(transactions[1].amount).toBe(-150.75)
-      expect(transactions[1].type).toBe('debit')
+      expect(transactions[1].type).toBe('expense')
       expect(transactions[1].balance).toBe(4849.25)
       
       // ATM withdrawal
       expect(transactions[2].description).toBe('ATM Para Çekme')
       expect(transactions[2].amount).toBe(-500)
-      expect(transactions[2].type).toBe('debit')
+      expect(transactions[2].type).toBe('expense')
       expect(transactions[2].balance).toBe(4349.25)
       
       // EFT incoming
       expect(transactions[3].description).toBe('EFT Gelen')
       expect(transactions[3].amount).toBe(1200)
-      expect(transactions[3].type).toBe('credit')
+      expect(transactions[3].type).toBe('income')
       expect(transactions[3].balance).toBe(5549.25)
     })
 
@@ -225,7 +218,9 @@ describe('ZiraatParser', () => {
       const worksheet = XLSX.utils.aoa_to_sheet(mockData)
       const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
       
-      expect(() => parser.parse(workbook)).toThrow('Unable to find header row in Ziraat bank statement')
+      const result = parser.parse(workbook)
+      expect(result.errors).toContain('Unable to find header row in Ziraat bank statement. Expected columns: Tarih, Açıklama, Tutar')
+      expect(result.transactions).toHaveLength(0)
     })
 
     test('should handle empty file', () => {
@@ -233,7 +228,9 @@ describe('ZiraatParser', () => {
       const worksheet = XLSX.utils.aoa_to_sheet(mockData)
       const workbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }
       
-      expect(() => parser.parse(workbook)).toThrow('Unable to find header row in Ziraat bank statement')
+      const result = parser.parse(workbook)
+      expect(result.errors).toContain('Unable to find header row in Ziraat bank statement. Expected columns: Tarih, Açıklama, Tutar')
+      expect(result.transactions).toHaveLength(0)
     })
 
     test('should filter out invalid transaction rows', () => {

@@ -1,24 +1,37 @@
 import { useMemo } from 'react';
+import { Transaction } from '../types';
 
-export default function TransactionChart({ transactions }) {
-  const chartData = useMemo(() => {
-    const monthlyData = {};
+interface TransactionChartProps {
+  transactions: Transaction[];
+}
+
+interface MonthlyData {
+  income: number;
+  expense: number;
+  net: number;
+}
+
+export default function TransactionChart({ transactions }: TransactionChartProps) {
+  const chartData = useMemo((): [string, MonthlyData][] => {
+    const monthlyData: Record<string, MonthlyData> = {};
     
     transactions.forEach(transaction => {
-      const date = new Date(transaction.date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { income: 0, expense: 0, net: 0 };
+      if (transaction.date) {
+        const date = new Date(transaction.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { income: 0, expense: 0, net: 0 };
+        }
+        
+        if (transaction.amount > 0) {
+          monthlyData[monthKey].income += transaction.amount;
+        } else {
+          monthlyData[monthKey].expense += Math.abs(transaction.amount);
+        }
+        
+        monthlyData[monthKey].net = monthlyData[monthKey].income - monthlyData[monthKey].expense;
       }
-      
-      if (transaction.amount > 0) {
-        monthlyData[monthKey].income += transaction.amount;
-      } else {
-        monthlyData[monthKey].expense += Math.abs(transaction.amount);
-      }
-      
-      monthlyData[monthKey].net = monthlyData[monthKey].income - monthlyData[monthKey].expense;
     });
 
     const sortedEntries = Object.entries(monthlyData).sort(([a], [b]) => a.localeCompare(b));
@@ -31,7 +44,7 @@ export default function TransactionChart({ transactions }) {
     ), 1000);
   }, [chartData]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY',
@@ -40,9 +53,9 @@ export default function TransactionChart({ transactions }) {
     }).format(amount);
   };
 
-  const formatMonth = (monthKey) => {
+  const formatMonth = (monthKey: string): string => {
     const [year, month] = monthKey.split('-');
-    return new Date(year, month - 1).toLocaleDateString('tr-TR', { 
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('tr-TR', { 
       year: 'numeric', 
       month: 'short' 
     });

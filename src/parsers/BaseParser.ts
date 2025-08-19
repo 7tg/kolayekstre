@@ -1,13 +1,13 @@
-export class BaseParser {
-  constructor() {
-    this.bankType = 'unknown';
-  }
+import { Transaction, ParseResult, BankParser } from '../types';
 
-  parse(workbook) {
-    throw new Error('parse() method must be implemented by subclasses');
-  }
+export abstract class BaseParser implements BankParser {
+  public bankType: string = 'unknown';
 
-  parseDate(value) {
+  constructor() {}
+
+  abstract parse(workbook: any): ParseResult;
+
+  parseDate(value: any): Date | null {
     if (!value) return null;
     
     try {
@@ -18,7 +18,7 @@ export class BaseParser {
       const dateStr = value.toString().trim();
       
       // Handle Turkish date format DD.MM.YYYY or DD/MM/YYYY first
-      const turkishDatePattern = /^(\d{1,2})[\.\/](\d{1,2})[\.\/](\d{4})$/;
+      const turkishDatePattern = /^(\d{1,2})[\.\\/](\d{1,2})[\.\\/](\d{4})$/;
       const turkishMatch = dateStr.match(turkishDatePattern);
       
       if (turkishMatch) {
@@ -51,7 +51,7 @@ export class BaseParser {
     }
   }
 
-  parseAmount(value) {
+  parseAmount(value: any): number {
     if (!value) return 0;
     
     let str = value.toString();
@@ -92,7 +92,7 @@ export class BaseParser {
     return num;
   }
 
-  generateRowId(row) {
+  generateRowId(row: any[]): string {
     const rowStr = row.join('|');
     let hash = 0;
     for (let i = 0; i < rowStr.length; i++) {
@@ -103,14 +103,14 @@ export class BaseParser {
     return hash.toString(36);
   }
 
-  isValidTransactionRow(row) {
+  isValidTransactionRow(row: any[]): boolean {
     if (!row || row.length === 0) return false;
     return row.some(cell => 
       cell !== null && cell !== undefined && cell !== ''
     );
   }
 
-  findHeaderRow(data, keywords = ['tarih', 'açıklama', 'tutar', 'date', 'description', 'amount']) {
+  findHeaderRow(data: any[][], keywords: string[] = ['tarih', 'açıklama', 'tutar', 'date', 'description', 'amount']): number {
     let bestMatch = -1;
     let maxMatches = 0;
     
@@ -119,7 +119,7 @@ export class BaseParser {
       if (!row || row.length < 3) continue; // Need at least 3 columns for a valid header
       
       let matches = 0;
-      const cellsWithKeywords = [];
+      const cellsWithKeywords: { cell: string; keywords: string[] }[] = [];
       
       for (let j = 0; j < row.length; j++) {
         const cell = row[j];
@@ -144,7 +144,7 @@ export class BaseParser {
     return bestMatch;
   }
 
-  createBaseTransaction(row) {
+  createBaseTransaction(row: any[]): Transaction {
     return {
       id: this.generateRowId(row),
       date: null,

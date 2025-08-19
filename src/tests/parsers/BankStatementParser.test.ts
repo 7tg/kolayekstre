@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import * as XLSX from 'xlsx'
-import { BankStatementParser } from '../../parsers/BankStatementParser.js'
-import { ZiraatParser } from '../../parsers/banks/ZiraatParser.js'
+import { BankStatementParser } from '../../parsers/BankStatementParser'
+import { ZiraatParser } from '../../parsers/banks/ZiraatParser'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -195,13 +195,11 @@ describe('BankStatementParser', () => {
       
       expect(result).toHaveProperty('bankType', 'ziraat')
       expect(result).toHaveProperty('transactions')
-      expect(result).toHaveProperty('totalRows')
       expect(result).toHaveProperty('filename', '1.xlsx')
       expect(result).toHaveProperty('fileSize', fileBuffer.length)
       expect(result).toHaveProperty('parsedAt')
       
       expect(Array.isArray(result.transactions)).toBe(true)
-      expect(typeof result.totalRows).toBe('number')
       expect(result.parsedAt).toBeInstanceOf(Date)
       
       // If we have transactions, validate their structure
@@ -219,7 +217,7 @@ describe('BankStatementParser', () => {
         expect(transaction.date).toBeInstanceOf(Date)
         expect(typeof transaction.description).toBe('string')
         expect(typeof transaction.amount).toBe('number')
-        expect(['credit', 'debit', 'unknown']).toContain(transaction.type)
+        expect(['income', 'expense', 'unknown']).toContain(transaction.type)
         expect(Array.isArray(transaction.rawData)).toBe(true)
         
         console.log(`Parsed ${result.transactions.length} transactions from real XLSX file`)
@@ -241,7 +239,7 @@ describe('BankStatementParser', () => {
         description: 'Test transaction',
         amount: 100,
         balance: 1000,
-        type: 'credit',
+        type: 'income',
         rawData: []
       }
       

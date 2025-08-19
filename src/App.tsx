@@ -4,13 +4,22 @@ import TransactionTable from './components/TransactionTable';
 import TransactionChart from './components/TransactionChart';
 import StatsPanel from './components/StatsPanel';
 import IndexedDBManager from './utils/indexedDB';
+import { Transaction, ParseResult } from './types';
 import './App.css';
 
+type TabType = 'stats' | 'chart' | 'table';
+
+interface ParsedResult extends ParseResult {
+  filename: string;
+  fileSize: number;
+  parsedAt: Date;
+}
+
 function App() {
-  const [transactions, setTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [dbManager] = useState(new IndexedDBManager());
-  const [activeTab, setActiveTab] = useState('stats');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [dbManager] = useState<IndexedDBManager>(() => new IndexedDBManager());
+  const [activeTab, setActiveTab] = useState<TabType>('stats');
 
   useEffect(() => {
     loadTransactions();
@@ -25,7 +34,7 @@ function App() {
     }
   };
 
-  const handleTransactionsLoaded = async (parsedData) => {
+  const handleTransactionsLoaded = async (parsedData: ParsedResult) => {
     try {
       const result = await dbManager.addTransactions(parsedData.transactions, parsedData.bankType);
       
@@ -42,7 +51,7 @@ function App() {
   };
 
   const handleClearData = async () => {
-    if (confirm('Tüm veriler silinecek. Emin misiniz?')) {
+    if (window.confirm('Tüm veriler silinecek. Emin misiniz?')) {
       try {
         await dbManager.clearAllData();
         setTransactions([]);

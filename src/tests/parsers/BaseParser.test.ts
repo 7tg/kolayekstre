@@ -1,8 +1,20 @@
 import { describe, test, expect } from 'vitest'
-import { BaseParser } from '../../parsers/BaseParser.js'
+import { BaseParser } from '../../parsers/BaseParser'
+import { ParseResult } from '../../types'
+
+class TestParser extends BaseParser {
+  constructor() {
+    super();
+    this.bankType = 'test';
+  }
+  
+  parse(workbook: any): ParseResult {
+    throw new Error('parse() method must be implemented by subclasses');
+  }
+}
 
 describe('BaseParser', () => {
-  const parser = new BaseParser()
+  const parser = new TestParser()
 
   describe('parseDate', () => {
     test('should parse Excel date number correctly', () => {

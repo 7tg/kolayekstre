@@ -1,7 +1,22 @@
 import { useMemo } from 'react';
+import { Transaction } from '../types';
 
-export default function StatsPanel({ transactions }) {
-  const stats = useMemo(() => {
+interface StatsPanelProps {
+  transactions: Transaction[];
+}
+
+interface StatsData {
+  totalTransactions: number;
+  totalIncome: number;
+  totalExpenses: number;
+  netAmount: number;
+  averageTransaction: number;
+  dateRange: { earliest: Date; latest: Date } | null;
+  bankTypes: string[];
+}
+
+export default function StatsPanel({ transactions }: StatsPanelProps) {
+  const stats = useMemo((): StatsData => {
     if (!transactions || transactions.length === 0) {
       return {
         totalTransactions: 0,
@@ -16,9 +31,9 @@ export default function StatsPanel({ transactions }) {
 
     let totalIncome = 0;
     let totalExpenses = 0;
-    const bankTypes = new Set();
-    let earliestDate = null;
-    let latestDate = null;
+    const bankTypes = new Set<string>();
+    let earliestDate: Date | null = null;
+    let latestDate: Date | null = null;
 
     transactions.forEach(transaction => {
       if (transaction.amount > 0) {
@@ -27,14 +42,18 @@ export default function StatsPanel({ transactions }) {
         totalExpenses += Math.abs(transaction.amount);
       }
       
-      bankTypes.add(transaction.bankType);
-      
-      const date = new Date(transaction.date);
-      if (!earliestDate || date < earliestDate) {
-        earliestDate = date;
+      if (transaction.bankType) {
+        bankTypes.add(transaction.bankType);
       }
-      if (!latestDate || date > latestDate) {
-        latestDate = date;
+      
+      if (transaction.date) {
+        const date = new Date(transaction.date);
+        if (!earliestDate || date < earliestDate) {
+          earliestDate = date;
+        }
+        if (!latestDate || date > latestDate) {
+          latestDate = date;
+        }
       }
     });
 
@@ -50,14 +69,14 @@ export default function StatsPanel({ transactions }) {
     };
   }, [transactions]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY'
     }).format(amount);
   };
 
-  const formatDate = (date) => {
+  const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString('tr-TR');
   };
 

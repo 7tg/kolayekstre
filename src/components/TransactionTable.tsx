@@ -1,9 +1,18 @@
 import { useState, useMemo } from 'react';
+import { Transaction } from '../types';
 
-export default function TransactionTable({ transactions }) {
-  const [sortField, setSortField] = useState('date');
-  const [sortDirection, setSortDirection] = useState('desc');
-  const [filterType, setFilterType] = useState('all');
+interface TransactionTableProps {
+  transactions: Transaction[];
+}
+
+type SortField = 'date' | 'description' | 'amount' | 'balance';
+type SortDirection = 'asc' | 'desc';
+type FilterType = 'all' | 'income' | 'expense';
+
+export default function TransactionTable({ transactions }: TransactionTableProps) {
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [filterType, setFilterType] = useState<FilterType>('all');
 
   const filteredAndSortedTransactions = useMemo(() => {
     let filtered = transactions;
@@ -15,12 +24,12 @@ export default function TransactionTable({ transactions }) {
     }
 
     return filtered.sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
 
       if (sortField === 'date') {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
+        aVal = new Date(aVal || 0);
+        bVal = new Date(bVal || 0);
       }
 
       if (sortDirection === 'asc') {
@@ -31,7 +40,7 @@ export default function TransactionTable({ transactions }) {
     });
   }, [transactions, sortField, sortDirection, filterType]);
 
-  const handleSort = (field) => {
+  const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -40,15 +49,15 @@ export default function TransactionTable({ transactions }) {
     }
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY'
     }).format(amount);
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('tr-TR');
+  const formatDate = (date: Date | null): string => {
+    return date ? new Date(date).toLocaleDateString('tr-TR') : '';
   };
 
   return (
@@ -56,7 +65,7 @@ export default function TransactionTable({ transactions }) {
       <div className="table-controls">
         <select 
           value={filterType} 
-          onChange={(e) => setFilterType(e.target.value)}
+          onChange={(e) => setFilterType(e.target.value as FilterType)}
           className="filter-select"
         >
           <option value="all">Tüm İşlemler</option>
@@ -96,7 +105,7 @@ export default function TransactionTable({ transactions }) {
                   {formatCurrency(transaction.amount)}
                 </td>
                 <td>{formatCurrency(transaction.balance)}</td>
-                <td className="bank-type">{transaction.bankType}</td>
+                <td className="bank-type">{transaction.bankType || ''}</td>
               </tr>
             ))}
           </tbody>
