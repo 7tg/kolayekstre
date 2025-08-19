@@ -19,7 +19,8 @@ import {
   AccountBalance as BankIcon,
   Delete as DeleteIcon,
   Menu as MenuIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  CloudUpload as UploadIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import ThemeToggle from '../ThemeToggle';
@@ -49,6 +50,12 @@ export default function Sidebar({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const navigationItems = [
+    {
+      id: 'upload',
+      label: t('wizard.upload'),
+      icon: <UploadIcon />,
+      disabled: false
+    },
     {
       id: 'stats',
       label: t('stats'),

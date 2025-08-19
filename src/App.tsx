@@ -14,28 +14,22 @@ import {
   Alert,
   Button
 } from '@mui/material';
-import FileUpload from './components/FileUpload';
+import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import TransactionTable from './components/TransactionTable';
 import TransactionChart from './components/TransactionChart';
 import StatsPanel from './components/StatsPanel';
 import MainLayout from './components/Layout/MainLayout';
+import UploadWizard from './pages/UploadWizard';
 import IndexedDBManager from './utils/indexedDB';
-import { Transaction, ParseResult } from './types';
+import { Transaction } from './types';
 
-type TabType = 'stats' | 'chart' | 'table';
-
-interface ParsedResult extends ParseResult {
-  filename: string;
-  fileSize: number;
-  parsedAt: Date;
-}
+type TabType = 'upload' | 'stats' | 'chart' | 'table';
 
 function App() {
   const { t } = useTranslation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dbManager] = useState<IndexedDBManager>(() => new IndexedDBManager());
-  const [activeTab, setActiveTab] = useState<TabType>('stats');
+  const [activeTab, setActiveTab] = useState<TabType>('upload');
   const [clearDialogOpen, setClearDialogOpen] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -56,9 +50,9 @@ function App() {
     }
   };
 
-  const handleTransactionsLoaded = async (parsedData: ParsedResult) => {
+  const handleWizardComplete = async (selectedTransactions: Transaction[]) => {
     try {
-      const result = await dbManager.addTransactions(parsedData.transactions, parsedData.bankType);
+      const result = await dbManager.addTransactions(selectedTransactions, selectedTransactions[0]?.bankType || 'unknown');
       
       if (result.added > 0) {
         await loadTransactions();
@@ -67,6 +61,8 @@ function App() {
           message: `${result.added} new transactions added. ${result.duplicates} transactions skipped (already exists).`,
           severity: 'success'
         });
+        // Navigate to stats after successful import
+        setActiveTab('stats');
       } else {
         setSnackbar({
           open: true,
@@ -81,6 +77,12 @@ function App() {
         message: 'Error occurred while saving transactions.',
         severity: 'error'
       });
+    }
+  };
+
+  const handleWizardCancel = () => {
+    if (transactions.length > 0) {
+      setActiveTab('stats');
     }
   };
 
@@ -115,35 +117,46 @@ function App() {
       onClearData={() => setClearDialogOpen(true)}
       hasTransactions={transactions.length > 0}
     >
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <FileUpload 
-          onTransactionsLoaded={handleTransactionsLoaded}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
+      {activeTab === 'upload' && (
+        <UploadWizard
+          onComplete={handleWizardComplete}
+          onCancel={handleWizardCancel}
         />
+      )}
 
-        {transactions.length > 0 && (
-          <Paper elevation={2} sx={{ mt: 3 }}>
-            <Box sx={{ p: 3 }}>
-              {activeTab === 'stats' && <StatsPanel transactions={transactions} />}
-              {activeTab === 'chart' && <TransactionChart transactions={transactions} />}
-              {activeTab === 'table' && <TransactionTable transactions={transactions} />}
-            </Box>
-          </Paper>
-        )}
+      {activeTab !== 'upload' && (
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          {transactions.length > 0 && (
+            <Paper elevation={2} sx={{ mt: 3 }}>
+              <Box sx={{ p: 3 }}>
+                {activeTab === 'stats' && <StatsPanel transactions={transactions} />}
+                {activeTab === 'chart' && <TransactionChart transactions={transactions} />}
+                {activeTab === 'table' && <TransactionTable transactions={transactions} />}
+              </Box>
+            </Paper>
+          )}
 
-        {transactions.length === 0 && !isLoading && (
-          <Paper elevation={2} sx={{ p: 6, textAlign: 'center', mt: 3 }}>
-            <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>📄</Typography>
-            <Typography variant="h5" component="h3" gutterBottom>
-              {t('noTransactions')}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {t('uploadArea')}
-            </Typography>
-          </Paper>
-        )}
-      </Container>
+          {transactions.length === 0 && (
+            <Paper elevation={2} sx={{ p: 6, textAlign: 'center', mt: 3 }}>
+              <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>📄</Typography>
+              <Typography variant="h5" component="h3" gutterBottom>
+                {t('noTransactions')}
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {t('wizard.noDataMessage')}
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => setActiveTab('upload')}
+                sx={{ mt: 2 }}
+                startIcon={<UploadIcon />}
+              >
+                {t('wizard.uploadFirst')}
+              </Button>
+            </Paper>
+          )}
+        </Container>
+      )}
 
       <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
         <DialogTitle>{t('clearData')}</DialogTitle>
