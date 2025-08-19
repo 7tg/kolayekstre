@@ -23,12 +23,12 @@ import {
   CloudUpload as UploadIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import ThemeToggle from '../ThemeToggle';
 import LanguageSelector from '../LanguageSelector';
 
 interface SidebarProps {
   activeTab: string;
-  onTabChange: (tab: string) => void;
   onClearData: () => void;
   hasTransactions: boolean;
   open: boolean;
@@ -39,7 +39,6 @@ const DRAWER_WIDTH = 280;
 
 export default function Sidebar({ 
   activeTab, 
-  onTabChange, 
   onClearData, 
   hasTransactions, 
   open, 
@@ -52,24 +51,28 @@ export default function Sidebar({
   const navigationItems = [
     {
       id: 'upload',
+      path: '/upload',
       label: t('wizard.upload'),
       icon: <UploadIcon />,
       disabled: false
     },
     {
       id: 'stats',
+      path: '/dashboard',
       label: t('stats'),
       icon: <AnalyticsIcon />,
       disabled: !hasTransactions
     },
     {
       id: 'chart',
+      path: '/chart',
       label: t('chart'),
       icon: <ChartIcon />,
       disabled: !hasTransactions
     },
     {
       id: 'table',
+      path: '/transactions',
       label: t('transactions'),
       icon: <TableIcon />,
       disabled: !hasTransactions
@@ -114,10 +117,13 @@ export default function Sidebar({
           {navigationItems.map((item) => (
             <ListItem key={item.id} disablePadding>
               <ListItemButton
+                component={Link}
+                to={item.path}
                 selected={activeTab === item.id}
-                onClick={() => onTabChange(item.id)}
                 disabled={item.disabled}
                 sx={{
+                  color: 'inherit',
+                  textDecoration: 'none',
                   '&.Mui-selected': {
                     bgcolor: 'action.selected',
                     '&:hover': {

@@ -5,7 +5,6 @@ import Sidebar from '../Navigation/Sidebar';
 interface MainLayoutProps {
   children: React.ReactNode;
   activeTab: string;
-  onTabChange: (tab: string) => void;
   onClearData: () => void;
   hasTransactions: boolean;
 }
@@ -15,7 +14,6 @@ const DRAWER_WIDTH = 280;
 export default function MainLayout({ 
   children, 
   activeTab, 
-  onTabChange, 
   onClearData, 
   hasTransactions 
 }: MainLayoutProps) {
@@ -31,7 +29,6 @@ export default function MainLayout({
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar
         activeTab={activeTab}
-        onTabChange={onTabChange}
         onClearData={onClearData}
         hasTransactions={hasTransactions}
         open={sidebarOpen}

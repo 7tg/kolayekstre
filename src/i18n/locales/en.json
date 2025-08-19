@@ -60,6 +60,12 @@
     "overview": "Overview",
     "dashboard": "Dashboard"
   },
+  "routes": {
+    "upload": "upload",
+    "dashboard": "dashboard", 
+    "chart": "chart",
+    "transactions": "transactions"
+  },
   "wizard": {
     "title": "Import Bank Statement",
     "subtitle": "Upload and import your bank transactions in 3 easy steps",

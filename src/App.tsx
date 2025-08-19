@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
-  Container, 
-  Paper, 
-  Typography, 
-  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -14,28 +11,42 @@ import {
   Alert,
   Button
 } from '@mui/material';
-import { CloudUpload as UploadIcon } from '@mui/icons-material';
-import TransactionTable from './components/TransactionTable';
-import TransactionChart from './components/TransactionChart';
-import StatsPanel from './components/StatsPanel';
 import MainLayout from './components/Layout/MainLayout';
 import UploadWizard from './pages/UploadWizard';
+import Dashboard from './pages/Dashboard';
+import Chart from './pages/Chart';
+import Transactions from './pages/Transactions';
+import EmptyState from './pages/EmptyState';
 import IndexedDBManager from './utils/indexedDB';
+import { getRouteKeyFromPath, getAllLocalizedPaths, navigateToRoute } from './utils/routing';
 import { Transaction } from './types';
-
-type TabType = 'upload' | 'stats' | 'chart' | 'table';
 
 function App() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [dbManager] = useState<IndexedDBManager>(() => new IndexedDBManager());
-  const [activeTab, setActiveTab] = useState<TabType>('upload');
   const [clearDialogOpen, setClearDialogOpen] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
     severity: 'success' | 'error' | 'info';
   }>({ open: false, message: '', severity: 'info' });
+
+  const activeTab = getRouteKeyFromPath(location.pathname, t);
+  const localizedPaths = getAllLocalizedPaths(t);
+
+  // Handle tab to route key mapping for legacy compatibility
+  const getTabFromRouteKey = (routeKey: string): string => {
+    switch (routeKey) {
+      case 'dashboard': return 'stats';
+      case 'transactions': return 'table';
+      default: return routeKey;
+    }
+  };
+
+  const displayTab = getTabFromRouteKey(activeTab);
 
   useEffect(() => {
     loadTransactions();
@@ -61,8 +72,8 @@ function App() {
           message: `${result.added} new transactions added. ${result.duplicates} transactions skipped (already exists).`,
           severity: 'success'
         });
-        // Navigate to stats after successful import
-        setActiveTab('stats');
+        // Navigate to dashboard after successful import
+        navigateToRoute('dashboard', t, navigate);
       } else {
         setSnackbar({
           open: true,
@@ -82,9 +93,10 @@ function App() {
 
   const handleWizardCancel = () => {
     if (transactions.length > 0) {
-      setActiveTab('stats');
+      navigateToRoute('dashboard', t, navigate);
     }
   };
+
 
   const handleClearData = async () => {
     try {
@@ -112,51 +124,57 @@ function App() {
 
   return (
     <MainLayout
-      activeTab={activeTab}
-      onTabChange={(tab) => setActiveTab(tab as TabType)}
+      activeTab={displayTab}
       onClearData={() => setClearDialogOpen(true)}
       hasTransactions={transactions.length > 0}
     >
-      {activeTab === 'upload' && (
-        <UploadWizard
-          onComplete={handleWizardComplete}
-          onCancel={handleWizardCancel}
+      <Routes>
+        <Route 
+          path={localizedPaths.upload} 
+          element={
+            <UploadWizard
+              onComplete={handleWizardComplete}
+              onCancel={handleWizardCancel}
+            />
+          } 
         />
-      )}
-
-      {activeTab !== 'upload' && (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          {transactions.length > 0 && (
-            <Paper elevation={2} sx={{ mt: 3 }}>
-              <Box sx={{ p: 3 }}>
-                {activeTab === 'stats' && <StatsPanel transactions={transactions} />}
-                {activeTab === 'chart' && <TransactionChart transactions={transactions} />}
-                {activeTab === 'table' && <TransactionTable transactions={transactions} />}
-              </Box>
-            </Paper>
-          )}
-
-          {transactions.length === 0 && (
-            <Paper elevation={2} sx={{ p: 6, textAlign: 'center', mt: 3 }}>
-              <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>📄</Typography>
-              <Typography variant="h5" component="h3" gutterBottom>
-                {t('noTransactions')}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                {t('wizard.noDataMessage')}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => setActiveTab('upload')}
-                sx={{ mt: 2 }}
-                startIcon={<UploadIcon />}
-              >
-                {t('wizard.uploadFirst')}
-              </Button>
-            </Paper>
-          )}
-        </Container>
-      )}
+        <Route 
+          path={localizedPaths.dashboard} 
+          element={
+            transactions.length > 0 ? (
+              <Dashboard transactions={transactions} />
+            ) : (
+              <EmptyState />
+            )
+          } 
+        />
+        <Route 
+          path={localizedPaths.chart} 
+          element={
+            transactions.length > 0 ? (
+              <Chart transactions={transactions} />
+            ) : (
+              <EmptyState />
+            )
+          } 
+        />
+        <Route 
+          path={localizedPaths.transactions} 
+          element={
+            transactions.length > 0 ? (
+              <Transactions transactions={transactions} />
+            ) : (
+              <EmptyState />
+            )
+          } 
+        />
+        {/* Fallback routes for English paths */}
+        <Route path="/upload" element={<UploadWizard onComplete={handleWizardComplete} onCancel={handleWizardCancel} />} />
+        <Route path="/dashboard" element={transactions.length > 0 ? <Dashboard transactions={transactions} /> : <EmptyState />} />
+        <Route path="/chart" element={transactions.length > 0 ? <Chart transactions={transactions} /> : <EmptyState />} />
+        <Route path="/transactions" element={transactions.length > 0 ? <Transactions transactions={transactions} /> : <EmptyState />} />
+        <Route path="/" element={transactions.length > 0 ? <Dashboard transactions={transactions} /> : <UploadWizard onComplete={handleWizardComplete} onCancel={handleWizardCancel} />} />
+      </Routes>
 
       <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
         <DialogTitle>{t('clearData')}</DialogTitle>

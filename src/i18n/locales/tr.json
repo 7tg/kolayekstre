@@ -60,6 +60,12 @@
     "overview": "Genel Bakış",
     "dashboard": "Kontrol Paneli"
   },
+  "routes": {
+    "upload": "yukle",
+    "dashboard": "panel",
+    "chart": "grafik", 
+    "transactions": "islemler"
+  },
   "wizard": {
     "title": "Banka Ekstresi İçe Aktar",
     "subtitle": "Banka işlemlerinizi 3 kolay adımda yükleyin ve içe aktarın",
