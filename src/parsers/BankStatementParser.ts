@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { ZiraatParser } from './banks/ZiraatParser';
+import { EnparaParser } from './banks/EnparaParser';
 import { ParseResult, Transaction, BankParser } from '../types';
 
 interface BankInfo {
@@ -20,6 +21,7 @@ export class BankStatementParser {
   constructor() {
     this.parsers = new Map();
     this.registerParser('ziraat', ZiraatParser);
+    this.registerParser('enpara', EnparaParser);
   }
 
   registerParser(bankType: string, ParserClass: new () => BankParser): void {

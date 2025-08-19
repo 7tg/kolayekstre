@@ -98,6 +98,7 @@ export default function FileUpload({ onTransactionsLoaded, isLoading, setIsLoadi
           >
             <MenuItem value="auto">{t('autoDetect')}</MenuItem>
             <MenuItem value="ziraat">{t('ziraatBank')}</MenuItem>
+            <MenuItem value="enpara">{t('enparaBank')}</MenuItem>
           </Select>
         </FormControl>
       </Box>

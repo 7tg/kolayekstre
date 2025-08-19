@@ -17,6 +17,7 @@ import {
   AccountBalance as BankIcon
 } from '@mui/icons-material';
 import { Transaction } from '../types';
+import { getBankDisplayName } from '../utils/bankUtils';
 
 interface StatsPanelProps {
   transactions: Transaction[];
@@ -208,7 +209,7 @@ export default function StatsPanel({ transactions }: StatsPanelProps) {
               {stats.bankTypes.map((bank, index) => (
                 <Chip 
                   key={index} 
-                  label={bank} 
+                  label={getBankDisplayName(bank)} 
                   variant="outlined" 
                   color="primary" 
                 />

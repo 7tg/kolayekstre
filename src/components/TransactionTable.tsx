@@ -19,6 +19,7 @@ import {
   TrendingDown as ExpenseIcon
 } from '@mui/icons-material';
 import { Transaction } from '../types';
+import { getBankShortName } from '../utils/bankUtils';
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -117,7 +118,7 @@ export default function TransactionTable({ transactions }: TransactionTableProps
         const bankType = params.value as string;
         return bankType ? (
           <Chip 
-            label={bankType} 
+            label={getBankShortName(bankType)} 
             size="small" 
             variant="outlined" 
             color="primary" 

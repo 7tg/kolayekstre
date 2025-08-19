@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest'
 import * as XLSX from 'xlsx'
 import { BankStatementParser } from '../../parsers/BankStatementParser'
 import { ZiraatParser } from '../../parsers/banks/ZiraatParser'
+import { EnparaParser } from '../../parsers/banks/EnparaParser'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -40,6 +41,8 @@ describe('BankStatementParser', () => {
       expect(parser.parsers).toBeInstanceOf(Map)
       expect(parser.parsers.has('ziraat')).toBe(true)
       expect(parser.parsers.get('ziraat')).toBe(ZiraatParser)
+      expect(parser.parsers.has('enpara')).toBe(true)
+      expect(parser.parsers.get('enpara')).toBe(EnparaParser)
     })
   })
 
@@ -66,6 +69,13 @@ describe('BankStatementParser', () => {
       expect(detectedParser).toBeInstanceOf(ZiraatParser)
     })
 
+    test('should detect Enpara bank from filename', () => {
+      const file = new MockFile(Buffer.from(''), 'enpara_movements.xls')
+      const detectedParser = parser.detectBankType(file)
+      
+      expect(detectedParser).toBeInstanceOf(EnparaParser)
+    })
+
     test('should return null for unknown bank', () => {
       const file = new MockFile(Buffer.from(''), 'unknown_bank.xlsx')
       const detectedParser = parser.detectBankType(file)
@@ -79,12 +89,17 @@ describe('BankStatementParser', () => {
       const banks = parser.getSupportedBanks()
       
       expect(Array.isArray(banks)).toBe(true)
-      expect(banks).toHaveLength(1)
+      expect(banks).toHaveLength(2)
       
       const ziraatBank = banks.find(b => b.type === 'ziraat')
       expect(ziraatBank).toBeDefined()
       expect(ziraatBank.name).toBe('Ziraat Bankası')
       expect(ziraatBank.canAutoDetect).toBe(true)
+
+      const enparaBank = banks.find(b => b.type === 'enpara')
+      expect(enparaBank).toBeDefined()
+      expect(enparaBank.name).toBe('Enpara.com')
+      expect(enparaBank.canAutoDetect).toBe(true)
     })
   })
 
@@ -128,6 +143,27 @@ describe('BankStatementParser', () => {
       expect(result).toHaveProperty('bankType', 'ziraat')
       expect(result).toHaveProperty('transactions')
       expect(result.transactions).toHaveLength(1)
+    })
+
+    test('should parse file with specified Enpara bank type', async () => {
+      const mockData = [
+        [null, null, "Enpara.comVadesiz TL Hesap Hareketleri"],
+        [null, "IBAN", null, null, null, null, null, null, "TR710011100000000083926637"],
+        [null, "Tarih", null, null, null, null, "Hareket tipi", null, null, "Açıklama", null, null, "İşlem Tutarı (TL)", null, "Bakiye (TL)"],
+        [null, null, null, "19.08.2025", null, null, "Gelen Transfer", null, null, "Test Transaction", null, null, 1000, null, 5000]
+      ]
+
+      const worksheet = XLSX.utils.aoa_to_sheet(mockData)
+      const workbook = XLSX.write({ SheetNames: ['Sheet1'], Sheets: { Sheet1: worksheet } }, { type: 'array' })
+      
+      const file = new MockFile(workbook, 'bank_statement.xls')
+      
+      const result = await parser.parseFile(file, 'enpara')
+      
+      expect(result).toHaveProperty('bankType', 'enpara')
+      expect(result).toHaveProperty('transactions')
+      expect(result.transactions).toHaveLength(1)
+      expect(result.transactions[0].iban).toBe('TR710011100000000083926637')
     })
 
     test('should throw error for unsupported bank type', async () => {

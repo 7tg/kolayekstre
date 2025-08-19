@@ -21,6 +21,7 @@ import {
   Assessment as StatsIcon
 } from '@mui/icons-material';
 import { ParseResult } from '../../types';
+import { getBankDisplayName } from '../../utils/bankUtils';
 
 interface ConfirmationStepProps {
   parseResult: ParseResult;
@@ -122,7 +123,7 @@ export default function ConfirmationStep({
                 </ListItemIcon>
                 <ListItemText
                   primary={t('wizard.bankType')}
-                  secondary={parseResult.bankType}
+                  secondary={getBankDisplayName(parseResult.bankType)}
                 />
               </ListItem>
               

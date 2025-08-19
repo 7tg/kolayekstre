@@ -24,6 +24,7 @@ import {
   TrendingDown as ExpenseIcon
 } from '@mui/icons-material';
 import { ParseResult } from '../../types';
+import { getBankDisplayName } from '../../utils/bankUtils';
 
 interface TransactionPreviewStepProps {
   parseResult: ParseResult;
@@ -109,7 +110,7 @@ export default function TransactionPreviewStep({
             variant="outlined"
           />
           <Chip
-            label={`${t('wizard.bank')}: ${parseResult.bankType}`}
+            label={`${t('wizard.bank')}: ${getBankDisplayName(parseResult.bankType)}`}
             color="secondary"
             variant="outlined"
           />

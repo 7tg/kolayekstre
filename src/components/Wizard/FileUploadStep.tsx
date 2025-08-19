@@ -27,7 +27,7 @@ interface FileUploadStepProps {
   setError: (error: string | null) => void;
 }
 
-type BankType = 'auto' | 'ziraat';
+type BankType = 'auto' | 'ziraat' | 'enpara';
 
 export default function FileUploadStep({
   onFileUploaded,
@@ -175,6 +175,7 @@ export default function FileUploadStep({
           >
             <MenuItem value="auto">{t('wizard.autoDetect')}</MenuItem>
             <MenuItem value="ziraat">{t('wizard.ziraatBank')}</MenuItem>
+            <MenuItem value="enpara">{t('wizard.enparaBank')}</MenuItem>
           </Select>
         </FormControl>
       </Box>
