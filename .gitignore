@@ -24,5 +24,5 @@ dist-ssr
 *.sln
 *.sw?
 
-/src/tests/bank_statements/ziraat/
+/src/tests/bank_statements/
 
